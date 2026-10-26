@@ -39,17 +39,123 @@
         .container { width: min(1140px, 100% - 40px); margin-inline: auto; }
 
         /* ---------- Navigation ---------- */
-        .nav { position: sticky; top: 0; z-index: 20; background: var(--navy); }
-        .nav .container { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; }
-        .brand { display: flex; align-items: center; gap: 10px; color: #fff; font-weight: 700; font-size: 1.4rem; }
-        .brand img { width: 40px; height: 40px; filter: drop-shadow(0 6px 10px rgba(255,107,53,.45)); }
+        .nav {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            background: rgba(26, 26, 46, .96);
+            border-bottom: 1px solid rgba(255, 255, 255, .07);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+        }
+        .nav .container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 24px;
+            padding: 12px 0;
+        }
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0;
+            color: #fff;
+            font-weight: 700;
+            font-size: 1.3rem;
+        }
+        .brand img {
+            width: 38px;
+            height: 38px;
+            filter: drop-shadow(0 5px 10px rgba(255,107,53,.3));
+        }
         .brand b { color: var(--orange); font-weight: 700; }
-        .nav ul { list-style: none; display: flex; gap: 2px; align-items: center; background: rgba(255,255,255,.08); padding: 5px; border-radius: 999px; }
-        .nav ul a { display: block; color: #b9bdd0; font-size: .9rem; font-weight: 600; padding: 8px 18px; border-radius: 999px; transition: .2s; }
-        .nav ul a:hover { color: #fff; background: rgba(255,255,255,.08); }
-        .nav ul a.active:hover { background: var(--orange); }
-        .nav ul a.active { background: var(--orange); color: #fff; box-shadow: 0 6px 14px rgba(255,107,53,.4); }
-        section, .hero { scroll-margin-top: 72px; }
+        .main-nav { display: flex; justify-content: center; min-width: 0; }
+        .nav ul {
+            list-style: none;
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            background: rgba(255,255,255,.07);
+            padding: 5px;
+            border: 1px solid rgba(255,255,255,.05);
+            border-radius: 999px;
+        }
+        .nav ul a {
+            display: block;
+            color: #c2c5d7;
+            font-size: .78rem;
+            font-weight: 500;
+            padding: 9px 12px;
+            border-radius: 999px;
+            white-space: nowrap;
+            transition: color .2s, background .2s;
+        }
+        .nav ul a:hover { color: #fff; background: rgba(255,255,255,.09); }
+        .nav ul a.active {
+            color: #fff;
+            background: var(--orange);
+            box-shadow: 0 4px 12px rgba(255,107,53,.2);
+        }
+
+        /* Authentication buttons */
+        .auth-nav {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 10px;
+            flex-shrink: 0;
+            font-family: 'Outfit', sans-serif;
+        }
+        .auth-link, .auth-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            text-decoration: none;
+            white-space: nowrap;
+            font-size: .82rem;
+            font-weight: 600;
+            border-radius: 10px;
+            transition: all .2s ease;
+        }
+        .auth-link {
+            padding: 10px 14px;
+            color: #f0eff8;
+            border: 1px solid transparent;
+        }
+        .auth-link:hover {
+            color: var(--orange);
+            background: rgba(255,255,255,.06);
+        }
+        .auth-button {
+            padding: 11px 16px;
+            color: #fff;
+            background: var(--orange);
+            border: 1px solid var(--orange);
+            box-shadow: 0 5px 15px rgba(255,107,53,.2);
+        }
+        .auth-button:hover {
+            background: #f85b27;
+            border-color: #f85b27;
+            box-shadow: 0 7px 20px rgba(255,107,53,.3);
+            transform: translateY(-1px);
+        }
+        .auth-arrow { font-size: 15px; line-height: 1; transition: transform .2s ease; }
+        .auth-button:hover .auth-arrow { transform: translate(2px, -2px); }
+        .auth-link:focus-visible, .auth-button:focus-visible {
+            outline: 2px solid #ffb394;
+            outline-offset: 3px;
+        }
+        section, .hero { scroll-margin-top: 80px; }
+
+        @media (max-width: 1050px) {
+            .nav .container { gap: 12px; }
+            .nav ul a { padding: 8px 9px; font-size: .73rem; }
+            .auth-nav { gap: 5px; }
+            .auth-link { padding: 9px 10px; }
+            .auth-button { padding: 10px 12px; }
+        }
 
         /* ---------- Hero (navy header with wave, like the UniFetch UI) ---------- */
         .hero { position: relative; background: var(--navy); color: #fff; padding: 56px 0 120px; overflow: hidden; }
@@ -152,9 +258,13 @@
             .about-img { aspect-ratio: 16 / 11; order: -1; }
         }
         @media (max-width: 640px) {
-            .nav .container { flex-direction: column; gap: 10px; }
+            .nav .container { flex-direction: column; gap: 12px; padding: 12px 0; }
+            .main-nav { width: 100%; justify-content: center; }
             .nav ul { max-width: 100%; overflow-x: auto; scrollbar-width: none; }
-            .nav ul a { padding: 7px 12px; font-size: .82rem; white-space: nowrap; }
+            .nav ul::-webkit-scrollbar { display: none; }
+            .nav ul a { padding: 8px 11px; font-size: .78rem; white-space: nowrap; }
+            .auth-nav { width: 100%; justify-content: center; gap: 10px; }
+            .auth-link, .auth-button { padding: 10px 16px; font-size: .82rem; }
             .hero { padding: 40px 0 96px; }
             section { padding: 52px 0; }
             .user-grid, .grid-4, .steps { grid-template-columns: 1fr; }
@@ -173,7 +283,8 @@
                 <img src="{{ asset('images/logo.svg') }}" alt="UniFetch logo">
                 <span>Uni<b>Fetch</b></span>
             </a>
-            <nav>
+
+            <nav class="main-nav" aria-label="Main navigation">
                 <ul>
                     <li><a href="#users">Who It's For</a></li>
                     <li><a href="#features">Features</a></li>
@@ -181,6 +292,18 @@
                     <li><a href="#about">About</a></li>
                 </ul>
             </nav>
+
+            {{-- Only show authentication links when the named routes exist.
+                 This prevents RouteNotFoundException in projects where auth pages
+                 have not been added yet. --}}
+            @if (\Illuminate\Support\Facades\Route::has('login') && \Illuminate\Support\Facades\Route::has('register'))
+                <div class="auth-nav">
+                    <a href="{{ route('login') }}" class="auth-link">Sign In</a>
+                    <a href="{{ route('register') }}" class="auth-button">
+                        Create Account <span class="auth-arrow" aria-hidden="true">↗</span>
+                    </a>
+                </div>
+            @endif
         </div>
     </header>
 
