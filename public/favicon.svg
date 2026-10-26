@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="UniFetch logo">
+  <rect width="64" height="64" rx="16" fill="#FF6B35"/>
+  <path d="M18 26h28l-2.4 22a4 4 0 0 1-4 3.6H24.4a4 4 0 0 1-4-3.6L18 26z" fill="#fff"/>
+  <path d="M25 26v-3a7 7 0 0 1 14 0v3" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round"/>
+  <path d="M27.5 33v8a4.5 4.5 0 0 0 9 0v-8" fill="none" stroke="#151A33" stroke-width="3.4" stroke-linecap="round"/>
+</svg>
