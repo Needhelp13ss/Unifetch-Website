@@ -2,7 +2,7 @@
 
 UniFetch is a food ordering web application with errand services for the University of Cebu Lapu-Lapu and Mandaue (UCLM).
 
-Hello everyone! UniFetch was originally planned as a mobile app, but for now we are building it as a website. (For school project only.)
+Hello everyone! UniFetch is a web-based platform developed as part of our school project.
 
 ## Members
 - Cabaltera, Jc
