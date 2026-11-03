@@ -500,7 +500,13 @@
 
                 <form method="POST" action="{{ route('register.store') }}">
                     @csrf
-
+@if ($errors->any())
+    <div style="color: #dc2626; margin-bottom: 15px;">
+        @foreach ($errors->all() as $error)
+            <p>{{ $error }}</p>
+        @endforeach
+    </div>
+@endif
                     <div class="form-row">
                         <div class="form-group">
                             <label for="first_name">First Name</label>
