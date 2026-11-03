@@ -498,7 +498,7 @@
                     Fill in your details to get started with UniFetch.
                 </p>
 
-                <form method="POST" action="">
+                <form method="POST" action="{{ route('register.store') }}">
                     @csrf
 
                     <div class="form-row">

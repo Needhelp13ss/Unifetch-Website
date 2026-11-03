@@ -465,9 +465,15 @@
                     Enter your university credentials to continue to UniFetch.
                 </p>
 
-                <form method="POST" action="">
+                <form method="POST" action="{{ route('login.store') }}">
                     @csrf
-
+@if ($errors->any())
+    <div style="color: #dc2626; margin-bottom: 15px;">
+        @foreach ($errors->all() as $error)
+            <p>{{ $error }}</p>
+        @endforeach
+    </div>
+@endif
                     <div class="form-group">
                         <label for="email">Institutional Email</label>
                         <input
