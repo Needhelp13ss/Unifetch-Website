@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\ProfileController;
 
 Route::get('/', function () {
     return view('unifetch');
@@ -33,12 +34,19 @@ Route::middleware('auth')->group(function () {
     })->name('dashboard');
 
     Route::get('/profile', function () {
-    return view('profile');
-})->name('profile');
+        return view('profile');
+    })->name('profile');
 
-Route::post('/profile/image', [AuthController::class, 'updateProfileImage'])
-    ->name('profile.image');
-    
+    Route::post('/profile/image', [AuthController::class, 'updateProfileImage'])
+        ->name('profile.image');
+
+    // ---- NEW: profile CRUD ----
+    Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile/image', [ProfileController::class, 'destroyImage'])->name('profile.image.destroy');
+    Route::delete('/profile/details', [ProfileController::class, 'clearDetails'])->name('profile.details.clear');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    // ---------------------------
+
     Route::post('/logout', [AuthController::class, 'logout'])
         ->name('logout');
 });

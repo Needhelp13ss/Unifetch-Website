@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 
 class AuthController extends Controller
-{
+{ // REGISTER ACCOUNT
     public function register(Request $request)
     {
         $validated = $request->validate([
@@ -20,20 +20,20 @@ class AuthController extends Controller
             'password' => 'required|string|min:8',
         ]);
 
-        $user = User::create([
+        User::create([
             'name' => $validated['first_name'] . ' ' . $validated['last_name'],
             'student_id' => $validated['student_id'],
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
         ]);
 
-        Auth::login($user);
-        $request->session()->regenerate();
-
-        return redirect()->route('dashboard')
-            ->with('success', 'Welcome to UniFetch! Your account was created.');
+        // DO NOT AUTOMATICALLY LOG IN THE USER
+        // Redirect to login after successful registration
+        return redirect()->route('login')
+            ->with('success', 'Account created successfully! Please log in.');
     }
 
+    // LOGIN ACCOUNT
     public function login(Request $request)
     {
         $credentials = $request->validate([
@@ -42,6 +42,7 @@ class AuthController extends Controller
         ]);
 
         if (Auth::attempt($credentials)) {
+
             $request->session()->regenerate();
 
             return redirect()->intended(route('dashboard'));
@@ -52,6 +53,7 @@ class AuthController extends Controller
         ])->onlyInput('email');
     }
 
+    // LOGOUT ACCOUNT
     public function logout(Request $request)
     {
         Auth::logout();
@@ -62,6 +64,7 @@ class AuthController extends Controller
         return redirect()->route('home');
     }
 
+    // UPDATE PROFILE IMAGE
     public function updateProfileImage(Request $request)
     {
         $request->validate([
@@ -81,6 +84,9 @@ class AuthController extends Controller
             'profile_image' => $path,
         ]);
 
-        return back()->with('success', 'Profile picture updated successfully!');
+        return back()->with(
+            'success',
+            'Profile picture updated successfully!'
+        );
     }
 }
