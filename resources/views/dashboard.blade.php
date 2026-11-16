@@ -36,9 +36,9 @@
         </a>
         <div class="menu">
             <a class="active" href="{{ route('dashboard') }}">Home</a>
-            <a href="#">Food Ordering</a>
+            <a href="{{ route('menu') }}">Food Ordering</a>
             <a href="#">Errand Services</a>
-            <a href="#">My Orders</a>
+            <a href="{{ route('orders') }}">My Orders</a>
             <a href="{{ route('profile') }}">Profile</a>
         </div>
         <div class="user-menu">
@@ -63,9 +63,9 @@
     </section>
 
     <section class="cards">
-        <a class="card" href="#"><div class="icon">🍔</div><h3>Food Ordering</h3><p>Browse food and place an order.</p></a>
+        <a class="card" href="{{ route('menu') }}"><div class="icon">🍔</div><h3>Food Ordering</h3><p>Browse food and place an order.</p></a>
         <a class="card" href="#"><div class="icon">🛵</div><h3>Errand Services</h3><p>Request an errand around campus.</p></a>
-        <a class="card" href="#"><div class="icon">📦</div><h3>My Orders</h3><p>View your current and past orders.</p></a>
+        <a class="card" href="{{ route('orders') }}"><div class="icon">📦</div><h3>My Orders</h3><p>View your current and past orders.</p></a>
         <a class="card" href="{{ route('profile') }}"><div class="icon">👤</div><h3>My Profile</h3><p>View your UniFetch account details.</p></a>
     </section>
 
