@@ -425,14 +425,14 @@
                 <h1>Campus life,<br><span>delivered.</span></h1>
 
                 <p>
-                    Your campus companion for food orders and everyday errands.
+                    Your campus companion for orders and everyday errands.
                     Spend less time waiting and more time doing what matters.
                 </p>
 
                 <div class="brand-features">
                     <div class="feature">
                         <span class="feature-icon">✓</span>
-                        <span>Convenient campus food ordering</span>
+                        <span>Convenient campus ordering</span>
                     </div>
                     <div class="feature">
                         <span class="feature-icon">↗</span>

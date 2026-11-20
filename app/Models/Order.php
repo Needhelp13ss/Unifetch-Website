@@ -11,11 +11,11 @@ use RuntimeException;
 
 class Order extends Model
 {
-    /** Flat delivery fee (pesos) charged once per food order. Change it here. */
+    /** Flat delivery fee (pesos) charged once per menu order. Change it here. */
     public const DELIVERY_FEE = 20;
 
     /** Custom orders and errands: the fee the customer offers must be inside this range. */
-    public const ERRAND_MIN_FEE = 20;
+    public const ERRAND_MIN_FEE = 5;
     public const ERRAND_MAX_FEE = 500;
 
     /** A runner can carry this many unfinished jobs at the same time. */
@@ -121,7 +121,7 @@ class Order extends Model
         return match ($this->type) {
             'custom' => 'Custom order',
             'errand' => 'Errand',
-            default => 'Food order',
+            default => 'Order',
         };
     }
 

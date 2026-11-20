@@ -10,7 +10,7 @@ use Illuminate\Validation\Rule;
 
 class ProfileController extends Controller
 {
-    private const YEAR_LEVELS = [
+    public const YEAR_LEVELS = [
         '1st Year', '2nd Year', '3rd Year', '4th Year', '5th Year', 'Graduate',
     ];
 

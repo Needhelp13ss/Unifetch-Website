@@ -4,13 +4,13 @@
 
 @section('content')
 <main class="wrap page">
-    <div class="page-head"><div><div class="eyebrow">Admin</div><h1>Orders</h1><p>Food orders, custom orders and errands.</p></div></div>
+    <div class="page-head"><div><div class="eyebrow">Admin</div><h1>Orders</h1><p>Orders, custom orders and errands.</p></div></div>
 
     <form class="toolbar" method="GET">
         <input class="input" type="search" name="q" value="{{ $q }}" placeholder="Order number or customer">
         <select class="input" name="status"><option value="">All statuses</option>
             @foreach(\App\Models\Order::STATUSES as $k => $l)<option value="{{ $k }}" @selected($status === $k)>{{ $l }}</option>@endforeach</select>
-        <select class="input" name="type"><option value="">All types</option><option value="food" @selected($type === 'food')>Food orders</option><option value="custom" @selected($type === 'custom')>Custom orders</option><option value="errand" @selected($type === 'errand')>Errands</option></select>
+        <select class="input" name="type"><option value="">All types</option><option value="food" @selected($type === 'food')>Orders</option><option value="custom" @selected($type === 'custom')>Custom orders</option><option value="errand" @selected($type === 'errand')>Errands</option></select>
         <button class="btn btn-dark" type="submit">Filter</button>
     </form>
 

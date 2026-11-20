@@ -7,7 +7,13 @@
 <main class="wrap page">
     <div class="page-head">
         <div><div class="eyebrow">User</div><h1>{{ $person->name }} <span class="role {{ $person->role }}" style="vertical-align:middle">{{ \App\Models\User::ROLES[$person->role] ?? $person->role }}</span></h1>
-            <p>{{ $person->student_id }} · {{ $person->email }}@if($person->phone) · {{ $person->phone }}@endif</p></div>
+            <p>{{ $person->student_id }} · {{ $person->email }}@if($person->phone) · {{ $person->phone }}@endif</p>
+            @if($person->isVerifiedStudent())<span class="ok-badge">✓ UCLM student</span>@endif
+            @if($person->portal_id || $person->id_photo_path)
+                <div class="verify"><span>🪪 Portal ID: <b>{{ $person->portal_id ?? '—' }}</b></span><span>🎓 {{ $person->course ?? '—' }} · {{ $person->year_level ?? '—' }}</span>
+                    @if($person->id_photo_path)<a class="id-link" href="{{ route('admin.runners.id', $person) }}" target="_blank" rel="noopener">View school ID photo ↗</a>@endif</div>
+            @endif
+        </div>
         <a class="link-arrow" href="{{ route('admin.users') }}">← All users</a>
     </div>
 

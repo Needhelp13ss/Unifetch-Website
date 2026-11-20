@@ -19,7 +19,7 @@ class AuthController extends Controller
             'email' => 'required|email|max:255|unique:users,email',
             'password' => 'required|string|min:8',
             'account_type' => 'nullable|in:customer,runner',
-        ]);
+        ] + RunnerController::applicationRules(null, 'account_type'), RunnerController::applicationMessages());
 
         $user = new User([
             'name' => $validated['first_name'] . ' ' . $validated['last_name'],
@@ -30,11 +30,11 @@ class AuthController extends Controller
 
         // Runners start as customers until the admin approves them.
         if (($validated['account_type'] ?? 'customer') === 'runner') {
-            $user->runner_status = 'pending';
-            $user->runner_applied_at = now();
+            $user->save();
+            RunnerController::saveApplication($user, $validated, $request->file('id_photo'));
+        } else {
+            $user->save();
         }
-
-        $user->save();
 
         // DO NOT AUTOMATICALLY LOG IN THE USER
         // Redirect to login after successful registration

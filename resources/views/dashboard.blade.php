@@ -18,7 +18,7 @@
     </section>
 
     <section class="cards">
-        <a class="card" href="{{ route('menu') }}"><div class="ico">🍔</div><h3>Food Ordering</h3><p>Order food, or request something that isn't on the menu.</p></a>
+        <a class="card" href="{{ route('menu') }}"><div class="ico">🍔</div><h3>Ordering</h3><p>Order what you need, or request something that isn't on the menu.</p></a>
         <a class="card" href="{{ route('errand.create') }}"><div class="ico">🏃</div><h3>Errand Services</h3><p>Need a parcel picked up or someone to wait in line? Ask a runner.</p></a>
 
         @if($u->isRunner())
@@ -37,14 +37,14 @@
         <section class="panel runner-cta">
             @if($u->hasPendingRunnerApplication())
                 <div class="ico">⏳</div>
-                <div class="grow"><h3>Runner application pending</h3><p>The admin is reviewing your application. You'll get access to the runner board as soon as you're approved.</p></div>
+                <div class="grow"><h3>Runner application pending</h3><p>The admin is checking your school ID and reviewing your application. You'll get access to the runner board as soon as you're approved.</p></div>
             @else
                 <div class="ico">🛵</div>
                 <div class="grow">
                     <h3>{{ $u->runner_status === 'rejected' ? 'Want to try becoming a runner again?' : 'Want to earn as a runner?' }}</h3>
-                    <p>Runners pick up orders and errands around campus and keep the delivery fee. The admin approves every runner.</p>
+                    <p>Runners pick up orders and errands around campus and keep the delivery fee. You'll need your portal ID and a photo of your school ID, and the admin approves every runner.</p>
                 </div>
-                <form method="POST" action="{{ route('runner.apply') }}">@csrf <button class="btn btn-dark" type="submit">Apply to be a runner</button></form>
+                <a class="btn btn-dark" href="{{ route('runner.apply.form') }}">Apply to be a runner</a>
             @endif
         </section>
     @endunless

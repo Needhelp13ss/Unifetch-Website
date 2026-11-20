@@ -57,3 +57,11 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: .92rem; }
 @media (max-width: 1000px) { .kpis { grid-template-columns: 1fr 1fr; } .two-col, .profile-grid { grid-template-columns: 1fr; } }
 @media (max-width: 560px) { .kpis { grid-template-columns: 1fr 1fr; gap: 10px; } .kpi b { font-size: 1.4rem; } .toolbar .input { width: 100%; } }
 .two-col > *, .profile-grid > *, .detail-grid > * { min-width: 0; }
+
+.verify { margin-top: 8px; display: grid; gap: 4px; font-size: .86rem; color: #3d4256; }
+.verify b { color: var(--navy); }
+.verify .ok { color: var(--green); font-weight: 700; }
+.id-link { display: inline-block; margin-top: 4px; font-weight: 700; color: var(--orange-dark); }
+.id-link:hover { text-decoration: underline; }
+.ok-badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: .72rem; font-weight: 800; background: #e6f7ee; color: #157347; vertical-align: middle; }
+.verify b, .item-row .verify b { display: inline; }

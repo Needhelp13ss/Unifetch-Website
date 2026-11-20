@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use Illuminate\Support\Facades\Storage;
 
 class RunnerController extends Controller
 {
@@ -16,6 +17,17 @@ class RunnerController extends Controller
                 'runnerOrders as active_count' => fn ($q) => $q->whereIn('status', ['preparing', 'on_the_way']),
             ])->orderBy('name')->get(),
             'rejected' => User::where('role', 'customer')->where('runner_status', 'rejected')->orderBy('name')->get(),
+        ]);
+    }
+
+    /** The school-ID photo is private: only the admin can look at it. */
+    public function idPhoto(User $user)
+    {
+        abort_unless($user->id_photo_path && Storage::exists($user->id_photo_path), 404);
+
+        return Storage::response($user->id_photo_path, null, [
+            'Cache-Control' => 'private, no-store',
+            'X-Content-Type-Options' => 'nosniff',
         ]);
     }
 

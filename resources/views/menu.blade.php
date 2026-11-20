@@ -1,6 +1,6 @@
 @extends('layouts.shop')
 
-@section('title', 'Food Ordering')
+@section('title', 'Ordering')
 @section('nav', 'menu')
 @section('band')<div class="band"></div>@endsection
 
@@ -19,7 +19,7 @@
         @if($activeCategory)<input type="hidden" name="category" value="{{ $activeCategory }}">@endif
         <label class="search">
             <svg class="icon"><use href="#i-search"/></svg>
-            <input type="search" name="q" value="{{ $search }}" placeholder="Search food, shops…" aria-label="Search">
+            <input type="search" name="q" value="{{ $search }}" placeholder="Search items, shops…" aria-label="Search">
         </label>
     </form>
 

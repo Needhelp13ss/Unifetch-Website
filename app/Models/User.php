@@ -51,8 +51,28 @@ class User extends Authenticatable
             'birthday' => 'date',
             'show_gender' => 'boolean',
             'runner_applied_at' => 'datetime',
+            'enrolled_confirmed' => 'boolean',
             'wallet_balance' => 'decimal:2',
         ];
+    }
+
+    /** Deleting an account also deletes the school-ID photo they uploaded. */
+    protected static function booted(): void
+    {
+        static::deleting(function (User $user) {
+            if ($user->id_photo_path) {
+                \Illuminate\Support\Facades\Storage::delete($user->id_photo_path);
+            }
+        });
+    }
+
+    /**
+     * The "UCLM student" badge: shown once the admin has checked a runner's
+     * school ID, portal ID and enrolment, and approved them.
+     */
+    public function isVerifiedStudent(): bool
+    {
+        return $this->isRunner() && $this->enrolled_confirmed && $this->id_photo_path !== null;
     }
 
     public function isAdmin(): bool

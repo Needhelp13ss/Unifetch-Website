@@ -11,6 +11,8 @@ use App\Support\Wallet;
 use Database\Seeders\AdminSeeder;
 use Database\Seeders\ShopSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class RunnersWalletAdminTest extends TestCase
@@ -59,17 +61,154 @@ class RunnersWalletAdminTest extends TestCase
         $this->actingAs($applicant)->get('/dashboard')->assertSee('Runner application pending')->assertDontSee('Runner Jobs');
     }
 
-    public function test_registering_as_runner_creates_a_pending_application(): void
+    private function runnerFields(array $over = []): array
     {
+        return $over + [
+            'portal_id' => 'UCLM-2201234', 'course' => 'BS Information Technology', 'year_level' => '3rd Year',
+            'enrolled_confirmed' => '1', 'id_photo' => UploadedFile::fake()->image('id.jpg', 600, 400),
+        ];
+    }
+
+    public function test_registering_as_runner_needs_verification_details_and_creates_a_pending_application(): void
+    {
+        Storage::fake('local');
+
         $this->post('/register', [
             'first_name' => 'Rey', 'last_name' => 'Runner', 'student_id' => '22-0001',
-            'email' => 'rey@example.com', 'password' => 'password123', 'account_type' => 'runner',
-        ])->assertRedirect('/login');
+            'email' => 'rey@gmail.com', 'password' => 'password123', 'account_type' => 'runner',
+        ] + $this->runnerFields())->assertRedirect('/login');
 
-        $u = User::where('email', 'rey@example.com')->first();
+        $u = User::where('email', 'rey@gmail.com')->first();
         $this->assertSame('customer', $u->role);
         $this->assertSame('pending', $u->runner_status);
         $this->assertFalse($u->isRunner());
+        $this->assertSame('UCLM-2201234', $u->portal_id);
+        $this->assertSame('BS Information Technology', $u->course);
+        $this->assertSame('3rd Year', $u->year_level);
+        $this->assertTrue($u->enrolled_confirmed);
+        Storage::disk('local')->assertExists($u->id_photo_path);
+    }
+
+    public function test_runner_registration_is_refused_without_the_verification_details(): void
+    {
+        Storage::fake('local');
+        $base = ['first_name' => 'Rey', 'last_name' => 'Runner', 'student_id' => '22-0001', 'email' => 'rey@example.com', 'password' => 'password123', 'account_type' => 'runner'];
+
+        $this->post('/register', $base)->assertSessionHasErrors(['portal_id', 'course', 'year_level', 'enrolled_confirmed', 'id_photo']);
+        $this->post('/register', $base + $this->runnerFields(['enrolled_confirmed' => null]))->assertSessionHasErrors('enrolled_confirmed');
+        $this->post('/register', $base + $this->runnerFields(['id_photo' => UploadedFile::fake()->create('id.pdf', 100, 'application/pdf')]))->assertSessionHasErrors('id_photo');
+        $this->assertNull(User::where('email', 'rey@example.com')->first());
+    }
+
+    public function test_customers_can_register_with_any_email_and_no_runner_details(): void
+    {
+        $this->post('/register', [
+            'first_name' => 'Cara', 'last_name' => 'Customer', 'student_id' => '22-0009',
+            'email' => 'cara@gmail.com', 'password' => 'password123', 'account_type' => 'customer',
+        ])->assertRedirect('/login')->assertSessionHasNoErrors();
+
+        $u = User::where('email', 'cara@gmail.com')->firstOrFail();
+        $this->assertNull($u->runner_status);
+        $this->assertNull($u->id_photo_path);
+    }
+
+    public function test_existing_customer_can_apply_to_become_a_runner_with_their_id(): void
+    {
+        Storage::fake('local');
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->get('/runner/apply')->assertOk()->assertSee('Portal ID')->assertSee('currently enrolled UCLM student');
+
+        // missing pieces are refused
+        $this->actingAs($user)->post('/runner/apply', [])->assertSessionHasErrors(['portal_id', 'course', 'year_level', 'enrolled_confirmed', 'id_photo']);
+        $this->assertFalse($user->fresh()->hasPendingRunnerApplication());
+
+        $this->actingAs($user)->post('/runner/apply', $this->runnerFields())->assertRedirect('/dashboard')->assertSessionHas('success');
+
+        $user->refresh();
+        $this->assertTrue($user->hasPendingRunnerApplication());
+        $this->assertSame('UCLM-2201234', $user->portal_id);
+        Storage::disk('local')->assertExists($user->id_photo_path);
+
+        // already applied: the form is closed
+        $this->actingAs($user)->get('/runner/apply')->assertRedirect('/dashboard');
+    }
+
+    public function test_a_portal_id_can_only_be_used_once(): void
+    {
+        Storage::fake('local');
+        User::factory()->create(['portal_id' => 'UCLM-2201234']);
+        $other = User::factory()->create();
+
+        $this->actingAs($other)->post('/runner/apply', $this->runnerFields())->assertSessionHasErrors('portal_id');
+    }
+
+    public function test_only_the_admin_can_see_the_school_id_photo_and_it_shows_when_approving(): void
+    {
+        Storage::fake('local');
+        $admin = User::factory()->admin()->create();
+        $applicant = User::factory()->create(['name' => 'Anna Applicant']);
+        $this->actingAs($applicant)->post('/runner/apply', $this->runnerFields());
+        $applicant->refresh();
+
+        $this->actingAs($admin)->get('/admin/runners')->assertOk()
+            ->assertSee('UCLM-2201234')->assertSee('BS Information Technology')->assertSee('3rd Year')
+            ->assertSee('currently enrolled UCLM student')->assertSee('View school ID photo');
+        $this->actingAs($admin)->get("/admin/runners/{$applicant->id}/id-photo")->assertOk();
+
+        // nobody else, not even the owner, can open the private photo address
+        $this->actingAs($applicant)->get("/admin/runners/{$applicant->id}/id-photo")->assertForbidden();
+        $this->actingAs(User::factory()->runner()->create())->get("/admin/runners/{$applicant->id}/id-photo")->assertForbidden();
+
+        // a user with no photo gives 404
+        $this->actingAs($admin)->get('/admin/runners/' . User::factory()->create()->id . '/id-photo')->assertNotFound();
+    }
+
+    public function test_uclm_student_badge_shows_only_for_verified_runners(): void
+    {
+        Storage::fake('local');
+        $applicant = User::factory()->create();
+        $this->actingAs($applicant)->post('/runner/apply', $this->runnerFields());
+        $applicant->refresh();
+
+        // pending: no badge yet
+        $this->actingAs($applicant)->get('/profile')->assertOk()->assertDontSee('UCLM STUDENT')->assertSee('Application pending');
+
+        // approved by the admin: badge appears
+        $this->actingAs(User::factory()->admin()->create())->patch("/admin/runners/{$applicant->id}/approve");
+        $this->actingAs($applicant->fresh())->get('/profile')->assertSee('UCLM STUDENT');
+
+        // a plain customer never gets it
+        $this->actingAs(User::factory()->create())->get('/profile')->assertDontSee('UCLM STUDENT');
+    }
+
+    public function test_deleting_a_user_deletes_their_id_photo(): void
+    {
+        Storage::fake('local');
+        $user = User::factory()->create();
+        $this->actingAs($user)->post('/runner/apply', $this->runnerFields());
+        $path = $user->fresh()->id_photo_path;
+        Storage::disk('local')->assertExists($path);
+
+        $this->actingAs(User::factory()->admin()->create())->delete("/admin/users/{$user->id}");
+        Storage::disk('local')->assertMissing($path);
+    }
+
+    public function test_minimum_runner_fee_is_five_pesos_and_wording_says_ordering_not_food(): void
+    {
+        $user = User::factory()->create();
+        $payload = $this->errandPayload(['fee' => 5]);
+
+        $this->actingAs($user)->post('/errand-services', $this->errandPayload(['fee' => 4]))->assertSessionHasErrors('fee');
+        $this->actingAs($user)->post('/errand-services', $payload)->assertRedirect()->assertSessionHasNoErrors();
+        $this->assertEquals(5, Order::firstOrFail()->total);
+        $this->actingAs($user)->post('/custom-order', [
+            'errand_title' => 'Water', 'errand_details' => 'Any', 'delivery_location' => 'Library', 'fee' => 5, 'payment_method' => 'cod',
+        ])->assertSessionHasNoErrors();
+
+        $this->flushSession();
+        $this->actingAs($user)->get('/dashboard')->assertDontSee('Food Ordering')->assertDontSee('Order food');
+        $this->actingAs($user)->get('/menu')->assertOk()->assertDontSee('Food Ordering');
     }
 
     public function test_cannot_make_yourself_admin_when_registering(): void
@@ -272,7 +411,7 @@ class RunnersWalletAdminTest extends TestCase
         $user = User::factory()->create();
 
         $this->actingAs($user)->post('/custom-order', [
-            'errand_title' => 'x', 'errand_details' => 'y', 'delivery_location' => 'z', 'fee' => 5, 'payment_method' => 'cod',
+            'errand_title' => 'x', 'errand_details' => 'y', 'delivery_location' => 'z', 'fee' => 4, 'payment_method' => 'cod',
         ])->assertSessionHasErrors('fee');
 
         $this->actingAs($user)->post('/custom-order', ['fee' => 50, 'payment_method' => 'cod'])
@@ -483,7 +622,7 @@ class RunnersWalletAdminTest extends TestCase
 
         $this->actingAs($user)->post('/errand-services', $this->errandPayload(['errand_category' => 'Hack the planet']))->assertSessionHasErrors('errand_category');
         $this->actingAs($user)->post('/errand-services', $this->errandPayload(['pickup_location' => '']))->assertSessionHasErrors('pickup_location');
-        $this->actingAs($user)->post('/errand-services', $this->errandPayload(['fee' => 5]))->assertSessionHasErrors('fee');
+        $this->actingAs($user)->post('/errand-services', $this->errandPayload(['fee' => 4]))->assertSessionHasErrors('fee');
         $this->actingAs($user)->post('/errand-services', [])->assertSessionHasErrors(['errand_category', 'errand_title', 'errand_details', 'pickup_location', 'delivery_location', 'fee']);
         $this->assertSame(0, Order::count());
     }

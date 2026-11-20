@@ -475,6 +475,11 @@
                 <span class="badge">
                     ● STUDENT ACCOUNT
                 </span>
+                @if($user->isVerifiedStudent())
+                    <span class="badge" style="background:#e6f7ee;color:#157347;margin-left:6px" title="School ID checked by the UniFetch admin">
+                        ✓ UCLM STUDENT
+                    </span>
+                @endif
 
                 @if($user->bio)
     <p class="profile-bio">{{ $user->bio }}</p>
@@ -677,15 +682,20 @@
             <h3>Become a UniFetch Runner</h3>
 
             <p>
-                Earn while helping fellow students! Deliver food and
+                Earn while helping fellow students! Deliver orders and
                 fulfill campus errands with UniFetch.
-                Runner enrollment will be available soon.
             </p>
         </div>
 
-        <button class="coming-soon" disabled>
-            Coming Soon
-        </button>
+        @if($user->isAdmin())
+            <span class="coming-soon" style="cursor:default">Admin account</span>
+        @elseif($user->isRunner())
+            <a class="coming-soon" style="background:#e6f7ee;color:#157347;text-decoration:none" href="{{ route('jobs.board') }}">✓ You're a runner · Open Runner Jobs</a>
+        @elseif($user->hasPendingRunnerApplication())
+            <span class="coming-soon" style="cursor:default">⏳ Application pending</span>
+        @else
+            <a class="coming-soon" style="background:#ff6633;color:#fff;text-decoration:none" href="{{ route('runner.apply.form') }}">Apply to be a runner</a>
+        @endif
 
     </section>
 {{-- DANGER ZONE --}}

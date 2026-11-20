@@ -24,7 +24,7 @@
         <div class="empty">
             <div class="big">🛒</div>
             <h3>Your cart is empty</h3>
-            <p>Add some food or campus essentials to get started.</p>
+            <p>Add something to get started.</p>
             <a class="btn btn-primary" href="{{ route('menu') }}">Browse the menu</a>
         </div>
     @else

@@ -8,7 +8,7 @@
 <main class="wrap page">
     <div class="page-head">
         <div>
-            <div class="eyebrow">Food Ordering</div>
+            <div class="eyebrow">Ordering</div>
             <h1>Want something that isn't listed?</h1>
             <p>Make a custom order. A verified runner will buy it and bring it to you.</p>
         </div>

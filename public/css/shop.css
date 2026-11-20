@@ -356,3 +356,6 @@ textarea.input { resize: vertical; min-height: 84px; }
 .cat input:focus-visible + span { outline: 3px solid rgba(255, 107, 53, .4); }
 .logout { white-space: nowrap; }
 @media (max-width: 1240px) { .menu a { padding: 9px 9px; font-size: .84rem; } .nav-inner { gap: 12px; } }
+
+.plain-check { display: flex; align-items: flex-start; gap: 10px; font-weight: 600; font-size: .95rem; cursor: pointer; }
+.plain-check input { width: 18px; height: 18px; margin-top: 2px; accent-color: var(--orange); flex: none; }

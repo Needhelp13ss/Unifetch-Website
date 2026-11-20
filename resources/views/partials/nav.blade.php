@@ -12,7 +12,7 @@
 
         <div class="menu">
             <a href="{{ route('dashboard') }}" class="{{ $navKey === 'home' ? 'active' : '' }}">Home</a>
-            <a href="{{ route('menu') }}" class="{{ $navKey === 'menu' ? 'active' : '' }}">Food Ordering</a>
+            <a href="{{ route('menu') }}" class="{{ $navKey === 'menu' ? 'active' : '' }}">Ordering</a>
             <a href="{{ route('errand.create') }}" class="{{ $navKey === 'errand' ? 'active' : '' }}">Errand Services</a>
             @if($me->isRunner())
                 {{-- the job board is only for approved runners --}}

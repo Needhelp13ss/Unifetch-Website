@@ -76,7 +76,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/orders/{order}', [OrderController::class, 'show'])->name('orders.show');
         Route::patch('/orders/{order}/cancel', [OrderController::class, 'cancel'])->name('orders.cancel');
 
-        // Custom order: an item that isn't on the menu (part of Food Ordering)
+        // Custom order: an item that isn't on the menu (part of Ordering)
         Route::get('/custom-order', [CustomOrderController::class, 'create'])->name('custom.create');
         Route::post('/custom-order', [CustomOrderController::class, 'store'])->name('custom.store');
 
@@ -88,7 +88,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/wallet', [WalletController::class, 'index'])->name('wallet');
         Route::post('/wallet/topup', [WalletController::class, 'topup'])->name('wallet.topup');
 
-        // Customers can apply to become a runner
+        // Customers can apply to become a runner (portal ID, course, school ID photo)
+        Route::get('/runner/apply', [RunnerController::class, 'applyForm'])->name('runner.apply.form');
         Route::post('/runner/apply', [RunnerController::class, 'apply'])->name('runner.apply');
 
         // Runner Jobs: approved runners only
@@ -106,6 +107,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/', [Admin\DashboardController::class, 'index'])->name('dashboard');
 
         Route::get('/runners', [Admin\RunnerController::class, 'index'])->name('runners');
+        Route::get('/runners/{user}/id-photo', [Admin\RunnerController::class, 'idPhoto'])->name('runners.id');
         Route::patch('/runners/{user}/approve', [Admin\RunnerController::class, 'approve'])->name('runners.approve');
         Route::patch('/runners/{user}/reject', [Admin\RunnerController::class, 'reject'])->name('runners.reject');
         Route::patch('/runners/{user}/revoke', [Admin\RunnerController::class, 'revoke'])->name('runners.revoke');

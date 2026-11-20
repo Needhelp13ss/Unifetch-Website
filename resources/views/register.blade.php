@@ -19,13 +19,21 @@
 
         .type-pick { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .type-opt { position: relative; display: block; cursor: pointer; }
-        .type-opt input { position: absolute; opacity: 0; }
+        .type-opt input, .form-group .type-opt input { position: absolute; opacity: 0; width: 0; height: 0; min-height: 0; padding: 0; border: 0; }
         .type-opt span { display: block; height: 100%; padding: 12px 14px; border: 1.5px solid var(--border); border-radius: 12px; background: #fff; transition: .15s; }
         .type-opt b { display: block; font-size: 14px; color: var(--navy); }
         .type-opt small { display: block; margin-top: 2px; font-size: 12px; color: var(--muted); line-height: 1.35; }
         .type-opt input:checked + span { border-color: var(--red); background: #fff6f2; box-shadow: 0 0 0 3px rgba(255, 102, 51, .12); }
         .type-opt input:focus-visible + span { outline: 3px solid rgba(255, 102, 51, .35); }
         @media (max-width: 480px) { .type-pick { grid-template-columns: 1fr; } }
+
+        .runner-fields { margin: 4px 0 18px; padding: 16px; border: 1.5px dashed #f4b79f; border-radius: 14px; background: #fff9f6; }
+        .runner-fields .rf-title { font-weight: 800; color: var(--navy); font-size: 14px; }
+        .runner-fields .rf-note { margin: 4px 0 14px; font-size: 12px; color: var(--muted); line-height: 1.45; }
+        .runner-fields .form-group select { display: block; width: 100%; min-height: 46px; padding: 12px 14px; color: var(--text); background: #fbfcfe; border: 1px solid var(--border); border-radius: 9px; font: inherit; font-size: 13px; }
+        .runner-fields .form-group input[type=file] { padding: 10px; background: #fff; }
+        .runner-fields .rf-check { display: flex; gap: 10px; align-items: flex-start; font-size: 13px; font-weight: 600; color: var(--navy); cursor: pointer; }
+        .runner-fields .rf-check input { width: 18px; height: 18px; margin-top: 1px; accent-color: var(--red); flex: none; }
 
         * {
             box-sizing: border-box;
@@ -470,7 +478,7 @@
 
                 <p>
                     Create your UniFetch account and discover a more convenient
-                    way to order food and access helpful errand services around campus.
+                    way to order what you need and access helpful errand services around campus.
                 </p>
 
                 <div class="brand-features">
@@ -480,7 +488,7 @@
                     </div>
                     <div class="feature">
                         <span class="feature-icon">↗</span>
-                        <span>Food ordering and campus errands</span>
+                        <span>Ordering and campus errands</span>
                     </div>
                     <div class="feature">
                         <span class="feature-icon">⌂</span>
@@ -508,7 +516,7 @@
                     Fill in your details to get started with UniFetch.
                 </p>
 
-                <form method="POST" action="{{ route('register.store') }}">
+                <form method="POST" action="{{ route('register.store') }}" enctype="multipart/form-data">
                     @csrf
 @if ($errors->any())
     <div style="color: #dc2626; margin-bottom: 15px;">
@@ -524,6 +532,7 @@
                                 type="text"
                                 id="first_name"
                                 name="first_name"
+                                value="{{ old('first_name') }}"
                                 placeholder="Juan"
                                 autocomplete="given-name"
                                 required
@@ -536,6 +545,7 @@
                                 type="text"
                                 id="last_name"
                                 name="last_name"
+                                value="{{ old('last_name') }}"
                                 placeholder="Dela Cruz"
                                 autocomplete="family-name"
                                 required
@@ -549,6 +559,7 @@
                             type="text"
                             id="student_id"
                             name="student_id"
+                                value="{{ old('student_id') }}"
                             placeholder="Enter your student ID"
                             autocomplete="off"
                             required
@@ -556,17 +567,18 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="email">Institutional Email</label>
+                        <label for="email">Email</label>
                         <input
                             type="email"
                             id="email"
                             name="email"
-                            placeholder="student@uclm.edu.ph"
+                                value="{{ old('email') }}"
+                            placeholder="you@example.com"
                             autocomplete="email"
                             required
                         >
                         <div class="form-hint">
-                            Use the email address associated with your university account.
+                            Any email address you use is fine.
                         </div>
                     </div>
 
@@ -587,13 +599,51 @@
                         <div class="type-pick">
                             <label class="type-opt">
                                 <input type="radio" name="account_type" value="customer" {{ old('account_type', 'customer') === 'customer' ? 'checked' : '' }}>
-                                <span><b>🍔 Customer</b><small>Order food and use errand services.</small></span>
+                                <span><b>🍔 Customer</b><small>Order what you need and use errand services.</small></span>
                             </label>
                             <label class="type-opt">
                                 <input type="radio" name="account_type" value="runner" {{ old('account_type') === 'runner' ? 'checked' : '' }}>
                                 <span><b>🛵 Runner</b><small>Run orders and errands, and earn. Needs admin approval.</small></span>
                             </label>
                         </div>
+                    </div>
+
+                    {{-- Only for people who want to become a runner --}}
+                    <div id="runnerFields" class="runner-fields" style="{{ old('account_type') === 'runner' ? '' : 'display:none' }}">
+                        <div class="rf-title">🛵 Runner verification</div>
+                        <p class="rf-note">Runners must be currently enrolled UCLM students. The admin checks this before approving you.</p>
+
+                        <div class="form-group">
+                            <label for="portal_id">UCLM Portal ID</label>
+                            <input type="text" id="portal_id" name="portal_id" value="{{ old('portal_id') }}" placeholder="Your student portal ID" autocomplete="off">
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="course">Course</label>
+                                <input type="text" id="course" name="course" value="{{ old('course') }}" placeholder="e.g. BS Information Technology">
+                            </div>
+                            <div class="form-group">
+                                <label for="year_level">Year level</label>
+                                <select id="year_level" name="year_level">
+                                    <option value="">Choose…</option>
+                                    @foreach(\App\Http\Controllers\ProfileController::YEAR_LEVELS as $level)
+                                        <option value="{{ $level }}" @selected(old('year_level') === $level)>{{ $level }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="id_photo">Photo of your school ID</label>
+                            <input type="file" id="id_photo" name="id_photo" accept="image/png,image/jpeg">
+                            <div class="form-hint">A clear JPG or PNG (up to 4 MB). Only the admin can see it.</div>
+                        </div>
+
+                        <label class="rf-check">
+                            <input type="checkbox" name="enrolled_confirmed" value="1" {{ old('enrolled_confirmed') ? 'checked' : '' }}>
+                            <span>I am a currently enrolled UCLM student.</span>
+                        </label>
                     </div>
 
                     <button type="submit" class="btn-submit">
@@ -614,5 +664,18 @@
         </section>
 
     </main>
+<script>
+    // show the runner verification fields only when "Runner" is picked
+    (function () {
+        var box = document.getElementById('runnerFields');
+        function sync() {
+            var runner = document.querySelector('input[name=account_type][value=runner]').checked;
+            box.style.display = runner ? '' : 'none';
+            box.querySelectorAll('input, select').forEach(function (el) { el.disabled = !runner; });
+        }
+        document.querySelectorAll('input[name=account_type]').forEach(function (r) { r.addEventListener('change', sync); });
+        sync();
+    })();
+</script>
 </body>
 </html>

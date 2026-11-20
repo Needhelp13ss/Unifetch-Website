@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>UniFetch | Food Ordering with Errand Services at UCLM</title>
-    <meta name="description" content="UniFetch is a food ordering web application with errand services for the University of Cebu Lapu-Lapu and Mandaue (UCLM).">
+    <meta name="description" content="UniFetch is an ordering web application with errand services for the University of Cebu Lapu-Lapu and Mandaue (UCLM).">
     <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -342,7 +342,7 @@
                     <h2>Who will use UniFetch</h2>
                 </div>
                 <div class="user-grid">
-                    <div class="user"><div class="emoji">🎓</div><div><h3>Students</h3><p>Order food and request errands.</p></div></div>
+                    <div class="user"><div class="emoji">🎓</div><div><h3>Students</h3><p>Place orders and request errands.</p></div></div>
                     <div class="user"><div class="emoji">👩‍🏫</div><div><h3>Faculty &amp; Staff</h3><p>Conveniently order meals and request services.</p></div></div>
                     <div class="user"><div class="emoji">🍳</div><div><h3>Food Vendors</h3><p>Manage menus and incoming orders.</p></div></div>
                     <div class="user"><div class="emoji">🏃</div><div><h3>Student Runners</h3><p>Accept and complete campus requests.</p></div></div>
@@ -367,8 +367,8 @@
                         <div class="icon">
                             <svg viewBox="0 0 24 24"><path d="M4 3v8a3 3 0 0 0 3 3v7M7 3v6M10 3v8a3 3 0 0 1-3 3"/><path d="M18 3c-2 1.5-3 4-3 7s1 4 3 4v7"/></svg>
                         </div>
-                        <h3>Food Ordering</h3>
-                        <p>Browse campus food vendors, view their menus, add items to your cart, and place your food order without leaving your seat.</p>
+                        <h3>Ordering</h3>
+                        <p>Browse campus food vendors, view their menus, add items to your cart, and place your order without leaving your seat.</p>
                     </article>
 
                     <article class="card">
@@ -392,7 +392,7 @@
                             <svg viewBox="0 0 24 24"><path d="M12 22s7-6.2 7-12a7 7 0 0 0-14 0c0 5.8 7 12 7 12z"/><circle cx="12" cy="10" r="2.5"/></svg>
                         </div>
                         <h3>Order Tracking</h3>
-                        <p>Monitor your food orders and errand requests in real time, from vendor preparation to runner arrival and completion.</p>
+                        <p>Monitor your orders and errand requests in real time, from vendor preparation to runner arrival and completion.</p>
                     </article>
                 </div>
             </div>
@@ -412,7 +412,7 @@
                     </div>
                     <div class="step">
                         <h4>Choose a service</h4>
-                        <p>Order food from campus vendors or submit an errand request.</p>
+                        <p>Order from campus vendors or submit an errand request.</p>
                     </div>
                     <div class="step">
                         <h4>A runner fulfills it</h4>
