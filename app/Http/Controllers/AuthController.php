@@ -18,14 +18,23 @@ class AuthController extends Controller
             'student_id' => 'required|string|max:50|unique:users,student_id',
             'email' => 'required|email|max:255|unique:users,email',
             'password' => 'required|string|min:8',
+            'account_type' => 'nullable|in:customer,runner',
         ]);
 
-        User::create([
+        $user = new User([
             'name' => $validated['first_name'] . ' ' . $validated['last_name'],
             'student_id' => $validated['student_id'],
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
         ]);
+
+        // Runners start as customers until the admin approves them.
+        if (($validated['account_type'] ?? 'customer') === 'runner') {
+            $user->runner_status = 'pending';
+            $user->runner_applied_at = now();
+        }
+
+        $user->save();
 
         // DO NOT AUTOMATICALLY LOG IN THE USER
         // Redirect to login after successful registration
@@ -44,6 +53,10 @@ class AuthController extends Controller
         if (Auth::attempt($credentials)) {
 
             $request->session()->regenerate();
+
+            if ($request->user()->isAdmin()) {
+                return redirect()->route('admin.dashboard');
+            }
 
             return redirect()->intended(route('dashboard'));
         }

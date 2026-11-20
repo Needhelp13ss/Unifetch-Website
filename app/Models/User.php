@@ -11,6 +11,12 @@ class User extends Authenticatable
 {
     use HasFactory, Notifiable;
 
+    /** Same defaults as the database, so a brand-new model behaves the same before it is reloaded. */
+    protected $attributes = [
+        'role' => 'customer',
+        'wallet_balance' => 0,
+    ];
+
     protected $fillable = [
         'name',
         'student_id',
@@ -34,6 +40,9 @@ class User extends Authenticatable
         'remember_token',
     ];
 
+    public const ROLES = ['customer' => 'Customer', 'runner' => 'Runner', 'admin' => 'Admin'];
+
+    /** Role and wallet are never mass-assigned from forms; code sets them on purpose. */
     protected function casts(): array
     {
         return [
@@ -41,7 +50,45 @@ class User extends Authenticatable
             'password' => 'hashed',
             'birthday' => 'date',
             'show_gender' => 'boolean',
+            'runner_applied_at' => 'datetime',
+            'wallet_balance' => 'decimal:2',
         ];
+    }
+
+    public function isAdmin(): bool
+    {
+        return $this->role === 'admin';
+    }
+
+    /** An approved runner (the only people who can see Errand Services). */
+    public function isRunner(): bool
+    {
+        return $this->role === 'runner';
+    }
+
+    public function hasPendingRunnerApplication(): bool
+    {
+        return $this->role === 'customer' && $this->runner_status === 'pending';
+    }
+
+    public function runnerOrders(): HasMany
+    {
+        return $this->hasMany(Order::class, 'runner_id');
+    }
+
+    public function walletTransactions(): HasMany
+    {
+        return $this->hasMany(WalletTransaction::class)->latest('id');
+    }
+
+    /** Cash this runner still has to hand over for active cash-on-delivery jobs. */
+    public function walletCommitted(): float
+    {
+        return (float) $this->runnerOrders()
+            ->whereIn('status', ['preparing', 'on_the_way'])
+            ->where('payment_method', 'cod')
+            ->get()
+            ->sum(fn (Order $o) => $o->cashToRemit());
     }
 
     public function cartItems(): HasMany

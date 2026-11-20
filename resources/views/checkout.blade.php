@@ -62,10 +62,13 @@
                             <span><b>Cash on Delivery</b><small>Pay the runner in cash when your order arrives.</small></span>
                             <span class="dot"></span>
                         </label>
-                        <label class="pay">
-                            <input type="radio" name="payment_method" value="ewallet" {{ old('payment_method') === 'ewallet' ? 'checked' : '' }}>
-                            <span class="ico">📱</span>
-                            <span><b>E-wallet (GCash / Maya)</b><small>Send the amount straight to your runner's e-wallet on arrival.</small></span>
+                        @php($enough = $walletBalance >= $total)
+                        <label class="pay {{ $enough ? '' : 'disabled' }}">
+                            <input type="radio" name="payment_method" value="wallet" {{ old('payment_method') === 'wallet' ? 'checked' : '' }} {{ $enough ? '' : 'disabled' }}>
+                            <span class="ico">👛</span>
+                            <span><b>UniFetch Wallet</b>
+                                <small>Balance: {{ \App\Support\Money::format($walletBalance) }}.
+                                @if($enough) Paid instantly, no cash needed. @else Not enough for this order. <a href="{{ route('wallet') }}" style="color:var(--orange);font-weight:600">Add money</a> @endif</small></span>
                             <span class="dot"></span>
                         </label>
                     </div>

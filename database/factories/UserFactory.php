@@ -33,6 +33,21 @@ class UserFactory extends Factory
         ];
     }
 
+    public function admin(): static
+    {
+        return $this->state(fn () => ['role' => 'admin']);
+    }
+
+    public function runner(): static
+    {
+        return $this->state(fn () => ['role' => 'runner', 'runner_status' => 'approved']);
+    }
+
+    public function pendingRunner(): static
+    {
+        return $this->state(fn () => ['runner_status' => 'pending', 'runner_applied_at' => now()]);
+    }
+
     /**
      * Indicate that the model's email address should be unverified.
      */

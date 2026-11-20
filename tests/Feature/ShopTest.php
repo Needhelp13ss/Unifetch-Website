@@ -151,7 +151,7 @@ class ShopTest extends TestCase
         $item = CartItem::create(['user_id' => $user->id, 'product_id' => $product->id, 'quantity' => 1]);
 
         $this->actingAs($user)->post('/orders', [
-            'items' => [$item->id], 'delivery_location' => 'Library', 'payment_method' => 'ewallet',
+            'items' => [$item->id], 'delivery_location' => 'Library', 'payment_method' => 'cod',
             'total' => 1, 'subtotal' => 1, 'price' => 1,
         ]);
 

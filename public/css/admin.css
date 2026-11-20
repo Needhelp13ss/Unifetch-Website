@@ -1,0 +1,59 @@
+/* UniFetch admin panel (builds on shop.css) */
+.admin-tag { font-style: normal; font-size: .62rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; background: var(--orange); color: #fff; padding: 3px 8px; border-radius: 6px; margin-left: 4px; }
+.pill-count { display: inline-grid; place-items: center; min-width: 20px; height: 20px; padding: 0 6px; margin-left: 4px; border-radius: 999px; background: var(--orange); color: #fff; font-size: .7rem; font-weight: 800; }
+
+.kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 24px; }
+.kpi { background: #fff; border: 1px solid var(--line); border-radius: 18px; padding: 18px 20px; }
+.kpi small { color: var(--muted); font-size: .78rem; text-transform: uppercase; letter-spacing: .07em; }
+.kpi b { display: block; font-size: 1.8rem; line-height: 1.2; margin-top: 2px; }
+.kpi span { color: var(--muted); font-size: .85rem; }
+.kpi.alert-kpi { border-color: #ffd2bf; background: #fff8f4; }
+
+.two-col { display: grid; grid-template-columns: 1.4fr 1fr; gap: 24px; align-items: start; }
+.table-wrap { overflow-x: auto; }
+table.tbl { width: 100%; border-collapse: collapse; font-size: .92rem; }
+.tbl th { text-align: left; color: var(--muted); font-size: .75rem; text-transform: uppercase; letter-spacing: .07em; padding: 12px 16px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.tbl td { padding: 13px 16px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+.tbl tr:last-child td { border-bottom: 0; }
+.tbl tbody tr:hover { background: #fafbfc; }
+.tbl .num { text-align: right; white-space: nowrap; }
+.tbl small { color: var(--muted); display: block; }
+.tbl a.strong { font-weight: 700; }
+.tbl a.strong:hover { color: var(--orange); }
+.row-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.row-actions form { margin: 0; }
+
+.role { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: .75rem; font-weight: 700; background: #eceef3; color: #4a4f63; }
+.role.runner { background: #e1edff; color: #1c5bc8; }
+.role.admin { background: #ffe9df; color: var(--orange-dark); }
+.role.pending { background: #fff3d6; color: #96650a; }
+
+.toolbar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 18px; }
+.toolbar .input { width: auto; min-width: 200px; padding: 10px 14px; }
+.toolbar select.input { min-width: 150px; }
+.toolbar .btn { padding: 10px 18px; font-size: .92rem; }
+
+.btn-ok { background: var(--green); color: #fff; }
+.btn-sm { padding: 8px 14px; font-size: .85rem; border-radius: 11px; }
+.panel .sec { padding: 22px; }
+.panel .sec + .sec { border-top: 1px solid var(--line); }
+.panel h2.sub { margin: 0 0 12px; font-size: 1.05rem; }
+.inline-form { display: flex; gap: 10px; flex-wrap: wrap; align-items: end; }
+.inline-form .field { margin: 0; flex: 1; min-width: 140px; }
+.grid-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; }
+.grid-form .field { margin: 0; }
+.check-line { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+.mutedp { color: var(--muted); font-size: .92rem; margin: 0 0 14px; }
+.profile-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; }
+.vendor-card { display: flex; align-items: center; gap: 14px; padding: 16px 20px; border-bottom: 1px solid var(--line); }
+.vendor-card:last-child { border-bottom: 0; }
+.vendor-card .grow { flex: 1; min-width: 0; }
+.vendor-card small { color: var(--muted); }
+.admin-note { background: #eef3ff; color: #2a4a99; border-radius: 12px; padding: 12px 14px; font-size: .9rem; margin-bottom: 18px; }
+.pager { display: flex; gap: 6px; justify-content: center; margin-top: 20px; flex-wrap: wrap; }
+.pager a, .pager span { padding: 8px 13px; border-radius: 10px; background: #fff; border: 1px solid var(--line); font-size: .9rem; }
+.pager .cur { background: var(--navy); color: #fff; border-color: var(--navy); }
+
+@media (max-width: 1000px) { .kpis { grid-template-columns: 1fr 1fr; } .two-col, .profile-grid { grid-template-columns: 1fr; } }
+@media (max-width: 560px) { .kpis { grid-template-columns: 1fr 1fr; gap: 10px; } .kpi b { font-size: 1.4rem; } .toolbar .input { width: 100%; } }
+.two-col > *, .profile-grid > *, .detail-grid > * { min-width: 0; }

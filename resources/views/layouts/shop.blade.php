@@ -22,36 +22,7 @@
     <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
 </svg>
 
-@php($nav = trim($__env->yieldContent('nav')))
-<nav class="nav">
-    <div class="nav-inner">
-        <a class="brand" href="{{ route('dashboard') }}">
-            <img src="{{ asset('favicon.svg') }}" alt="">
-            <span>Uni<b>Fetch</b></span>
-        </a>
-
-        <div class="menu">
-            <a href="{{ route('dashboard') }}" class="{{ $nav === 'home' ? 'active' : '' }}">Home</a>
-            <a href="{{ route('menu') }}" class="{{ $nav === 'menu' ? 'active' : '' }}">Food Ordering</a>
-            <a href="#">Errand Services</a>
-            <a href="{{ route('orders') }}" class="{{ $nav === 'orders' ? 'active' : '' }}">My Orders</a>
-            <a href="{{ route('profile') }}">Profile</a>
-        </div>
-
-        <div class="nav-right">
-            <a href="{{ route('cart') }}" class="cart-link" id="cartLink" aria-label="Open cart">
-                <svg class="icon"><use href="#i-cart"/></svg>
-                @php($cartCount = (int) Auth::user()->cartItems()->sum('quantity'))
-                <span class="badge" id="cartBadge" data-count="{{ $cartCount }}">{{ $cartCount }}</span>
-            </a>
-            <span class="user-name">{{ Auth::user()->name }}</span>
-            <form method="POST" action="{{ route('logout') }}">
-                @csrf
-                <button class="logout" type="submit">Log Out</button>
-            </form>
-        </div>
-    </div>
-</nav>
+@include('partials.nav', ['nav' => trim($__env->yieldContent('nav'))])
 
 @yield('band')
 

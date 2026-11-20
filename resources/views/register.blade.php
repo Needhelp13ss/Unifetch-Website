@@ -17,6 +17,16 @@
     --background: #f5f5f8;
 }
 
+        .type-pick { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .type-opt { position: relative; display: block; cursor: pointer; }
+        .type-opt input { position: absolute; opacity: 0; }
+        .type-opt span { display: block; height: 100%; padding: 12px 14px; border: 1.5px solid var(--border); border-radius: 12px; background: #fff; transition: .15s; }
+        .type-opt b { display: block; font-size: 14px; color: var(--navy); }
+        .type-opt small { display: block; margin-top: 2px; font-size: 12px; color: var(--muted); line-height: 1.35; }
+        .type-opt input:checked + span { border-color: var(--red); background: #fff6f2; box-shadow: 0 0 0 3px rgba(255, 102, 51, .12); }
+        .type-opt input:focus-visible + span { outline: 3px solid rgba(255, 102, 51, .35); }
+        @media (max-width: 480px) { .type-pick { grid-template-columns: 1fr; } }
+
         * {
             box-sizing: border-box;
             margin: 0;
@@ -570,6 +580,20 @@
                             autocomplete="new-password"
                             required
                         >
+                    </div>
+
+                    <div class="form-group">
+                        <label>I want to join as</label>
+                        <div class="type-pick">
+                            <label class="type-opt">
+                                <input type="radio" name="account_type" value="customer" {{ old('account_type', 'customer') === 'customer' ? 'checked' : '' }}>
+                                <span><b>🍔 Customer</b><small>Order food and use errand services.</small></span>
+                            </label>
+                            <label class="type-opt">
+                                <input type="radio" name="account_type" value="runner" {{ old('account_type') === 'runner' ? 'checked' : '' }}>
+                                <span><b>🛵 Runner</b><small>Run orders and errands, and earn. Needs admin approval.</small></span>
+                            </label>
+                        </div>
                     </div>
 
                     <button type="submit" class="btn-submit">

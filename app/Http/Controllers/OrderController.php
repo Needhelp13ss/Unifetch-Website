@@ -5,7 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Order;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
+use App\Support\Wallet;
+use RuntimeException;
 use Illuminate\Validation\Rule;
 
 class OrderController extends Controller
@@ -33,6 +34,7 @@ class OrderController extends Controller
             'deliveryFee' => Order::DELIVERY_FEE,
             'total' => $subtotal + Order::DELIVERY_FEE,
             'paymentMethods' => Order::PAYMENT_METHODS,
+            'walletBalance' => (float) $request->user()->wallet_balance,
             'locations' => self::LOCATION_SUGGESTIONS,
             'defaultLocation' => $request->user()->campus_location,
         ]);
@@ -65,41 +67,55 @@ class OrderController extends Controller
                 ->with('error', 'One of the selected items is no longer available. Please remove it and try again.');
         }
 
-        $order = DB::transaction(function () use ($request, $data, $items) {
-            $subtotal = $items->sum(fn ($i) => $i->line_total);
+        $subtotal = $items->sum(fn ($i) => $i->line_total);
 
-            $order = Order::create([
-                'user_id' => $request->user()->id,
-                'order_number' => $this->newOrderNumber(),
-                'status' => 'pending',
-                'subtotal' => $subtotal,
-                'delivery_fee' => Order::DELIVERY_FEE,
-                'total' => $subtotal + Order::DELIVERY_FEE,
-                'payment_method' => $data['payment_method'],
-                'delivery_location' => $data['delivery_location'],
-                'notes' => $data['notes'] ?? null,
-            ]);
+        if ($data['payment_method'] === 'wallet'
+            && Wallet::cents($request->user()->wallet_balance) < Wallet::cents($subtotal + Order::DELIVERY_FEE)) {
+            return back()->withInput()->with('error', 'Your wallet balance is too low for this order. Top up your wallet or pay with cash.');
+        }
 
-            foreach ($items as $item) {
-                $order->items()->create([
-                    'product_id' => $item->product_id,
-                    'vendor_name' => $item->product->vendor->name,
-                    'name' => $item->product->name,
-                    'emoji' => $item->product->emoji,
-                    'price' => $item->product->price,
-                    'quantity' => $item->quantity,
+        try {
+            $order = DB::transaction(function () use ($request, $data, $items, $subtotal) {
+                $order = Order::create([
+                    'user_id' => $request->user()->id,
+                    'order_number' => Order::newNumber(),
+                    'status' => 'pending',
+                    'subtotal' => $subtotal,
+                    'delivery_fee' => Order::DELIVERY_FEE,
+                    'total' => $subtotal + Order::DELIVERY_FEE,
+                    'payment_method' => $data['payment_method'],
+                    'delivery_location' => $data['delivery_location'],
+                    'notes' => $data['notes'] ?? null,
                 ]);
-            }
 
-            $request->user()->cartItems()->whereIn('id', $items->pluck('id'))->delete();
+                foreach ($items as $item) {
+                    $order->items()->create([
+                        'product_id' => $item->product_id,
+                        'vendor_name' => $item->product->vendor->name,
+                        'name' => $item->product->name,
+                        'emoji' => $item->product->emoji,
+                        'price' => $item->product->price,
+                        'quantity' => $item->quantity,
+                    ]);
+                }
 
-            return $order;
-        });
+                if ($data['payment_method'] === 'wallet') {
+                    Wallet::debit($request->user(), $order->total, 'payment',
+                        "Payment for {$order->order_number}", $order);
+                }
+
+                $request->user()->cartItems()->whereIn('id', $items->pluck('id'))->delete();
+
+                return $order;
+            });
+        } catch (RuntimeException $e) {
+            return back()->withInput()->with('error', $e->getMessage());
+        }
 
         $request->session()->forget('checkout_items');
 
         return redirect()->route('orders.show', $order)
-            ->with('success', "Order {$order->order_number} placed! We'll notify you when a runner picks it up.");
+            ->with('success', "Order {$order->order_number} placed! We're looking for a runner now.");
     }
 
     public function index(Request $request)
@@ -113,7 +129,7 @@ class OrderController extends Controller
     {
         abort_unless($order->user_id === $request->user()->id, 403);
 
-        return view('orders.show', ['order' => $order->load('items')]);
+        return view('orders.show', ['order' => $order->load('items', 'runner')]);
     }
 
     public function cancel(Request $request, Order $order)
@@ -121,12 +137,18 @@ class OrderController extends Controller
         abort_unless($order->user_id === $request->user()->id, 403);
 
         if (!$order->canBeCancelled()) {
-            return back()->with('error', 'Only pending orders can be cancelled.');
+            return back()->with('error', 'You can only cancel while we are still looking for a runner.');
         }
 
-        $order->update(['status' => 'cancelled']);
+        try {
+            $order->cancelAndRefund(true);
+        } catch (RuntimeException $e) {
+            return back()->with('error', $e->getMessage());
+        }
 
-        return back()->with('success', "Order {$order->order_number} was cancelled.");
+        $refund = $order->payment_method === 'wallet' ? ' Your payment was returned to your wallet.' : '';
+
+        return back()->with('success', "Order {$order->order_number} was cancelled.{$refund}");
     }
 
     /** Cart items of the current user, limited to the given ids. */
@@ -136,14 +158,5 @@ class OrderController extends Controller
             ->whereIn('id', $ids)
             ->with('product.vendor')
             ->get();
-    }
-
-    private function newOrderNumber(): string
-    {
-        do {
-            $number = 'UF-' . now()->format('ymd') . '-' . strtoupper(Str::random(4));
-        } while (Order::where('order_number', $number)->exists());
-
-        return $number;
     }
 }

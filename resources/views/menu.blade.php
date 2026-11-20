@@ -71,6 +71,15 @@
             @endforeach
         </div>
     @endif
+
+    <section class="promo">
+        <div>
+            <div class="eyebrow">More than delivery</div>
+            <h3>Want something that isn't listed?</h3>
+            <p>Make a custom order. Tell us what you want and where to get it, and a runner will buy it and bring it to you.</p>
+        </div>
+        <a class="btn btn-primary" href="{{ route('custom.create') }}">Request a custom order →</a>
+    </section>
 </main>
 @endsection
 
