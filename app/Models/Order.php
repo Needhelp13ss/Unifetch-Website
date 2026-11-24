@@ -12,7 +12,7 @@ use RuntimeException;
 class Order extends Model
 {
     /** Flat delivery fee (pesos) charged once per menu order. Change it here. */
-    public const DELIVERY_FEE = 20;
+    public const DELIVERY_FEE = 5;
 
     /** Custom orders and errands: the fee the customer offers must be inside this range. */
     public const ERRAND_MIN_FEE = 5;

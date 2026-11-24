@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UniFetch | Food Ordering with Errand Services at UCLM</title>
-    <meta name="description" content="UniFetch is an ordering web application with errand services for the University of Cebu Lapu-Lapu and Mandaue (UCLM).">
+    <title>UniFetch | A food ordering and errand services web application</title>
+    <meta name="description" content="UniFetch is a food ordering and errand services web application for the University of Cebu Lapu-Lapu and Mandaue (UCLM).">
     <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -318,7 +318,7 @@
                     <h1>Uni<b>Fetch</b></h1>
                     <p class="sub">Your campus, delivered.</p>
                     <p class="tagline">Your campus needs, just a fetch away!</p>
-                    <p class="project-title">A Food Ordering Web Application with Errand Services in the University of Cebu Lapu-Lapu and Mandaue (UCLM)</p>
+                    <p class="project-title">A food ordering and errand services web application</p>
                     <div class="hero-actions">
                         <a href="#features" class="btn btn-primary">Explore Features</a>
                         <a href="#about" class="btn btn-ghost">About UniFetch</a>
@@ -437,7 +437,7 @@
                     <div class="section-head" style="margin-bottom:0">
                         <h2>A faster, smarter, more organized campus experience</h2>
                     </div>
-                    <p>UniFetch is a proposed web-based system that combines food ordering and errand services for the University of Cebu Lapu-Lapu and Mandaue. It was created to help students, faculty, and staff save time during short breaks and busy schedules, while giving student runners and campus food vendors new opportunities to earn and reach more customers.</p>
+                    <p>UniFetch is a food ordering and errand services web application for the University of Cebu Lapu-Lapu and Mandaue (UCLM). It was created to help students, faculty, and staff save time during short breaks and busy schedules, while giving student runners and campus food vendors new opportunities to earn and reach more customers.</p>
                     <ul>
                         <li>Reduce time spent waiting in long canteen queues</li>
                         <li>Simplify minor campus errand requests</li>
@@ -456,7 +456,7 @@
                 <img src="{{ asset('images/logo.svg') }}" alt="UniFetch logo">
                 <span>Uni<b>Fetch</b></span>
             </a>
-            <p>A Food Ordering Web Application with Errand Services in UCLM</p>
+            <p>A food ordering and errand services web application</p>
             <small>College of Computer Studies &middot; University of Cebu Lapu-Lapu and Mandaue</small>
             <span class="verified">⬡ Verified UCLM campus website</span>
         </div>
