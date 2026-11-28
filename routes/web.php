@@ -17,6 +17,9 @@ use App\Http\Controllers\OrderPhotoController;
 use App\Http\Controllers\OrderChatController;
 use App\Http\Controllers\QuoteController;
 
+
+Route::post('/wallet/cashout', [WalletController::class, 'cashout'])->name('wallet.cashout');
+
 Route::get('/', function () {
     return view('unifetch');
 })->name('home');
