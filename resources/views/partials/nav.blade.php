@@ -19,6 +19,7 @@
                 <a href="{{ route('jobs.board') }}" class="{{ $navKey === 'jobs' ? 'active' : '' }}">Runner Jobs</a>
             @endif
             <a href="{{ route('orders') }}" class="{{ $navKey === 'orders' ? 'active' : '' }}">My Orders</a>
+            <a href="{{ route('history') }}" class="{{ $navKey === 'history' ? 'active' : '' }}">History</a>
             <a href="{{ route('wallet') }}" class="{{ $navKey === 'wallet' ? 'active' : '' }}">Wallet</a>
             <a href="{{ route('profile') }}">Profile</a>
         </div>

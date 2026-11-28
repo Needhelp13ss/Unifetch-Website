@@ -58,6 +58,10 @@ class AuthController extends Controller
                 return redirect()->route('admin.dashboard');
             }
 
+            if ($request->user()->isShop()) {
+                return redirect()->route('shop.dashboard');
+            }
+
             return redirect()->intended(route('dashboard'));
         }
 

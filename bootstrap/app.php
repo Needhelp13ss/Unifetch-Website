@@ -11,7 +11,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->appendToGroup('web', \App\Http\Middleware\TrackActivity::class);
+
         $middleware->alias([
+            'shop' => \App\Http\Middleware\EnsureShop::class,
             'admin' => \App\Http\Middleware\EnsureAdmin::class,
             'runner' => \App\Http\Middleware\EnsureRunner::class,
             'shopper' => \App\Http\Middleware\EnsureNotAdmin::class,

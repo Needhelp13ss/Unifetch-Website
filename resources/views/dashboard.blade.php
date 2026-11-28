@@ -29,6 +29,7 @@
         @endif
 
         <a class="card" href="{{ route('orders') }}"><div class="ico">📦</div><h3>My Orders</h3><p>Track your current and past orders.</p></a>
+        <a class="card" href="{{ route('history') }}"><div class="ico">🧾</div><h3>History</h3><p>Old and new transactions with proof of delivery.</p></a>
         <a class="card" href="{{ route('wallet') }}"><div class="ico">👛</div><h3>Wallet</h3><p>Balance: <b>{{ \App\Support\Money::format($u->wallet_balance ?? 0) }}</b>. Add money anytime.</p></a>
         <a class="card" href="{{ route('profile') }}"><div class="ico">👤</div><h3>My Profile</h3><p>View your UniFetch account details.</p></a>
     </section>

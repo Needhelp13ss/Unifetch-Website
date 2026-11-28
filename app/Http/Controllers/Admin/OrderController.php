@@ -30,9 +30,16 @@ class OrderController extends Controller
     public function show(Order $order)
     {
         return view('admin.order', [
-            'order' => $order->load('items', 'user', 'runner'),
+            'order' => $order->load('items', 'user', 'runner', 'photos.user', 'messages.user'),
             'runners' => User::where('role', 'runner')->orderBy('name')->get(),
         ]);
+    }
+
+    public function photo(Order $order, \App\Models\OrderPhoto $photo)
+    {
+        abort_unless($photo->order_id === $order->id && \Illuminate\Support\Facades\Storage::exists($photo->path), 404);
+
+        return \Illuminate\Support\Facades\Storage::response($photo->path);
     }
 
     public function assign(Request $request, Order $order)

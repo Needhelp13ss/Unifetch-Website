@@ -24,7 +24,7 @@
         </div>
     </div>
 
-    <form class="checkout-layout" method="POST" action="{{ route('errand.store') }}" novalidate>
+    <form class="checkout-layout" method="POST" action="{{ route('errand.store') }}" data-quote="{{ route('quote') }}" data-base="{{ $minFee }}" data-service="{{ \App\Support\Pricing::SERVICE_FEE }}" novalidate>
         @csrf
         <div style="display:grid;gap:24px">
             <section class="panel">
@@ -56,19 +56,34 @@
                                   placeholder="Tell the runner everything they need to know: names, tracking numbers, how long the line usually is...">{{ old('errand_details') }}</textarea>
                         @error('errand_details')<div class="err">{{ $message }}</div>@enderror
                     </div>
+                    <div class="field">
+                        <label class="lbl" for="pickup_location">Where should the runner go?</label>
+                        <input class="input" id="pickup_location" name="pickup_location" maxlength="120" value="{{ old('pickup_location') }}" placeholder="e.g. Cashier, Main Building" required>
+                        @error('pickup_location')<div class="err">{{ $message }}</div>@enderror
+                    </div>
+                    <div class="field">
+                        <label class="lbl" for="pickup_id">Nearest campus place to where it is <span style="font-weight:400;color:var(--muted)">(optional, sets the distance fee)</span></label>
+                        <select class="input" id="pickup_id" name="pickup_id">
+                            <option value="">Off campus / not listed</option>
+                            @foreach($places as $place)<option value="{{ $place->id }}" {{ (string) old('pickup_id') === (string) $place->id ? 'selected' : '' }}>{{ $place->name }}</option>@endforeach
+                        </select>
+                        @error('pickup_id')<div class="err">{{ $message }}</div>@enderror
+                    </div>
                     <div class="row2">
                         <div class="field" style="margin-bottom:0">
-                            <label class="lbl" for="pickup_location">Where should the runner go?</label>
-                            <input class="input" id="pickup_location" name="pickup_location" list="places" maxlength="120" value="{{ old('pickup_location') }}" placeholder="e.g. Cashier, Main Building" required>
-                            @error('pickup_location')<div class="err">{{ $message }}</div>@enderror
+                            <label class="lbl" for="location_id">Where should they meet you?</label>
+                            <select class="input" id="location_id" name="location_id" required>
+                                <option value="">Pick a campus place…</option>
+                                @foreach($places as $place)<option value="{{ $place->id }}" {{ (string) old('location_id', $defaultPlace) === (string) $place->id ? 'selected' : '' }}>{{ $place->name }}</option>@endforeach
+                            </select>
+                            @error('location_id')<div class="err">{{ $message }}</div>@enderror
                         </div>
                         <div class="field" style="margin-bottom:0">
-                            <label class="lbl" for="delivery_location">Where should they meet you?</label>
-                            <input class="input" id="delivery_location" name="delivery_location" list="places" maxlength="120" value="{{ old('delivery_location', $defaultLocation) }}" placeholder="e.g. Annex Building, Room 211" required>
-                            @error('delivery_location')<div class="err">{{ $message }}</div>@enderror
+                            <label class="lbl" for="delivery_details">Room or details <span style="font-weight:400;color:var(--muted)">(optional)</span></label>
+                            <input class="input" id="delivery_details" name="delivery_details" value="{{ old('delivery_details') }}" maxlength="80" placeholder="e.g. Room 211">
+                            @error('delivery_details')<div class="err">{{ $message }}</div>@enderror
                         </div>
                     </div>
-                    <datalist id="places">@foreach($locations as $place)<option value="{{ $place }}">@endforeach</datalist>
 
                     <div class="field" style="margin:16px 0 0">
                         <label class="lbl" for="budget">Money the runner may need to pay <span style="font-weight:400;color:var(--muted)">(optional)</span></label>
@@ -83,11 +98,15 @@
         <aside class="panel summary">
             <h2>Runner fee</h2>
             <div class="field">
-                <label class="lbl" for="fee">What will you pay the runner? (₱{{ $minFee }}–₱{{ $maxFee }})</label>
-                <input class="input" id="fee" name="fee" type="number" min="{{ $minFee }}" max="{{ $maxFee }}" step="1" value="{{ old('fee', 50) }}" required>
-                <p class="hint" style="margin-top:6px">Longer waits deserve a bigger fee. A fair fee gets picked up faster.</p>
+                <label class="lbl" for="fee">What will you pay the runner? (at least <span data-q="min">₱{{ $minFee }}</span>)</label>
+                <input class="input" id="fee" name="fee" type="number" min="{{ $minFee }}" max="{{ $maxFee }}" step="1" value="{{ old('fee', $minFee) }}" required>
+                <p class="hint" style="margin-top:6px">₱{{ \App\Support\Pricing::BASE_FEE }} plus ₱{{ \App\Support\Pricing::STEP_FEE }} for every {{ \App\Support\Pricing::STEP_METERS }} m. You can offer more to get picked up faster.</p>
                 @error('fee')<div class="err">{{ $message }}</div>@enderror
             </div>
+            <div class="sum-line"><span>Distance</span><span data-q="distance">pick a place</span></div>
+            <div class="sum-line"><span>Runner fee</span><span data-q="runner">₱{{ $minFee }}</span></div>
+            <div class="sum-line"><span>Service fee</span><span data-q="service">₱{{ \App\Support\Pricing::SERVICE_FEE }}</span></div>
+            <div class="sum-line total"><span>You pay</span><span data-q="total">₱{{ $minFee + \App\Support\Pricing::SERVICE_FEE }}</span></div>
 
             <div class="lbl" style="font-weight:700;margin-bottom:8px">Pay the fee with</div>
             <div class="pay-options">
@@ -122,6 +141,7 @@
 @endsection
 
 @push('scripts')
+<script src="{{ asset('js/quote.js') }}"></script>
 <script>
     // little examples that change with the kind of errand
     var examples = {

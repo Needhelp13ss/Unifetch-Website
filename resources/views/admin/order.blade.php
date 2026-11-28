@@ -66,10 +66,25 @@
                 <div><small>Runner</small><b>{{ $order->runner?->name ?? 'Nobody yet' }}</b></div>
                 <div><small>Deliver to</small><b>{{ $order->delivery_location }}</b></div>
                 <div><small>Payment</small><b>{{ $order->payment_label }}</b></div>
+                <div><small>Runner fee · distance</small><b>{{ $m($order->delivery_fee) }} · {{ $order->distance_m }} m</b></div>
+                <div><small>Service fee (UniFetch profit)</small><b>{{ $m($order->service_fee) }}</b></div>
                 @if($order->notes)<div><small>Notes</small><b>{{ $order->notes }}</b></div>@endif
                 @if($order->cashToRemit() > 0)<div><small>Cash runner owes UniFetch</small><b>{{ $m($order->cashToRemit()) }} @if($order->remitted > 0)<span style="color:var(--green)">(settled)</span>@endif</b></div>@endif
             </div>
         </aside>
     </div>
+
+    @include('orders._proof', ['readonly' => true])
+
+    <section class="panel" style="margin-top:24px">
+        <div class="panel-head"><h2>💬 Chat transcript <small style="color:var(--muted);font-weight:500">(read only)</small></h2></div>
+        <div class="sec">
+            @forelse($order->messages as $msg)
+                <p style="margin:0 0 8px"><b>{{ $msg->user->name }}</b> <small style="color:var(--muted)">{{ $msg->created_at->format('M j, g:i A') }}</small><br>{{ $msg->body }}</p>
+            @empty
+                <p class="mutedp" style="margin:0">No messages on this order.</p>
+            @endforelse
+        </div>
+    </section>
 </main>
 @endsection

@@ -39,12 +39,18 @@
             <span style="color:var(--muted);font-size:.85rem;margin-left:auto">Posted {{ $job->created_at->diffForHumans() }}</span>
         @else
             @if($job->status === 'preparing')
-                <form method="POST" action="{{ route('jobs.start', $job) }}">@csrf <button class="btn btn-primary" type="submit">I'm on my way</button></form>
+                <form method="POST" action="{{ route('jobs.start', $job) }}" enctype="multipart/form-data" class="job-photo">@csrf
+                    <label for="pp{{ $job->id }}">📸 Photo that you picked it up (required)</label>
+                    <input class="input" id="pp{{ $job->id }}" type="file" name="photo" accept="image/*" capture="environment" {{ $job->photo('runner_pickup') ? '' : 'required' }}>
+                    <button class="btn btn-primary" type="submit">I'm on my way</button></form>
                 <form method="POST" action="{{ route('jobs.release', $job) }}" onsubmit="return confirm('Give this job back so another runner can take it?')">@csrf <button class="btn btn-ghost" type="submit">Give back</button></form>
             @else
-                <form method="POST" action="{{ route('jobs.complete', $job) }}" onsubmit="return confirm('Mark this job as done?')">@csrf <button class="btn btn-primary" type="submit">{{ $job->isErrand() ? 'Mark done ✓' : 'Mark delivered ✓' }}</button></form>
+                <form method="POST" action="{{ route('jobs.complete', $job) }}" enctype="multipart/form-data" class="job-photo" onsubmit="return confirm('Mark this job as done?')">@csrf
+                    <label for="pd{{ $job->id }}">📸 Photo that you delivered it (required)</label>
+                    <input class="input" id="pd{{ $job->id }}" type="file" name="photo" accept="image/*" capture="environment" {{ $job->photo('runner_delivery') ? '' : 'required' }}>
+                    <button class="btn btn-primary" type="submit">{{ $job->isErrand() ? 'Mark done ✓' : 'Mark delivered ✓' }}</button></form>
             @endif
-            <span class="status {{ $job->status }}" style="margin-left:auto">{{ $job->status_label }}</span>
+            <a class="btn btn-ghost btn-sm" href="{{ route('orders.show', $job) }}">💬 Chat &amp; details</a><span class="status {{ $job->status }}" style="margin-left:auto">{{ $job->status_label }}</span>
         @endif
     </div>
 </article>

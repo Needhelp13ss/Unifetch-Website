@@ -11,11 +11,10 @@ use RuntimeException;
 
 class Order extends Model
 {
-    /** Flat delivery fee (pesos) charged once per menu order. Change it here. */
-    public const DELIVERY_FEE = 5;
-
-    /** Custom orders and errands: the fee the customer offers must be inside this range. */
-    public const ERRAND_MIN_FEE = 5;
+    /**
+     * Runner fee and service fee come from App\Support\Pricing (base + distance, plus the service fee).
+     * Custom orders and errands: the fee the customer offers can't be lower than the quote, and not above the max.
+     */
     public const ERRAND_MAX_FEE = 500;
 
     /** A runner can carry this many unfinished jobs at the same time. */
@@ -56,7 +55,7 @@ class Order extends Model
 
     protected $fillable = [
         'user_id', 'runner_id', 'order_number', 'type', 'status', 'errand_category', 'subtotal', 'delivery_fee',
-        'total', 'payment_method', 'delivery_location', 'notes',
+        'total', 'service_fee', 'distance_m', 'payment_method', 'delivery_location', 'notes',
         'errand_title', 'errand_details', 'pickup_location', 'budget',
         'accepted_at', 'delivered_at', 'remitted',
     ];
@@ -66,6 +65,7 @@ class Order extends Model
         return [
             'subtotal' => 'decimal:2',
             'delivery_fee' => 'decimal:2',
+            'service_fee' => 'decimal:2',
             'total' => 'decimal:2',
             'budget' => 'decimal:2',
             'remitted' => 'decimal:2',
@@ -87,6 +87,64 @@ class Order extends Model
     public function items(): HasMany
     {
         return $this->hasMany(OrderItem::class);
+    }
+
+    public function photos(): HasMany
+    {
+        return $this->hasMany(OrderPhoto::class);
+    }
+
+    public function messages(): HasMany
+    {
+        return $this->hasMany(OrderMessage::class);
+    }
+
+    public function photo(string $kind): ?OrderPhoto
+    {
+        return $this->photos->firstWhere('kind', $kind);
+    }
+
+    /** Names of the shops in a menu order. */
+    public function shopNames(): array
+    {
+        return $this->items->pluck('vendor_name')->unique()->values()->all();
+    }
+
+    /** Who may open this order's page, photos and chat: the customer, the runner and the shops in it. */
+    public function canBeSeenBy(User $user): bool
+    {
+        if ($user->isAdmin() || $user->id === $this->user_id || $user->id === $this->runner_id) {
+            return true;
+        }
+
+        return $user->isShop() && $user->vendor
+            && $this->items->contains(fn ($i) => $i->vendor_name === $user->vendor->name);
+    }
+
+    /** May this person add this kind of proof photo right now? */
+    public function photoAllowedFor(User $user, string $kind): bool
+    {
+        $running = in_array($this->status, ['preparing', 'on_the_way'], true);
+
+        return match ($kind) {
+            'shop_handover' => $user->isShop() && $this->runner_id !== null && ($running || $this->status === 'delivered')
+                && $this->canBeSeenBy($user),
+            'runner_pickup' => $user->id === $this->runner_id && $running,
+            'runner_delivery' => $user->id === $this->runner_id && $this->status === 'on_the_way',
+            'customer_received' => $user->id === $this->user_id && $this->status === 'delivered',
+            default => false,
+        };
+    }
+
+    /** Chat opens when a runner has the job and stays readable afterwards. */
+    public function chatOpen(): bool
+    {
+        return $this->runner_id !== null && in_array($this->status, ['preparing', 'on_the_way'], true);
+    }
+
+    public function hasChat(): bool
+    {
+        return $this->runner_id !== null && $this->status !== 'cancelled';
     }
 
     public static function newNumber(): string

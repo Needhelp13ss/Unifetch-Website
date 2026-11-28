@@ -11,6 +11,11 @@ use App\Http\Controllers\CustomOrderController;
 use App\Http\Controllers\ErrandServiceController;
 use App\Http\Controllers\RunnerController;
 use App\Http\Controllers\Admin;
+use App\Http\Controllers\Shop;
+use App\Http\Controllers\HistoryController;
+use App\Http\Controllers\OrderPhotoController;
+use App\Http\Controllers\OrderChatController;
+use App\Http\Controllers\QuoteController;
 
 Route::get('/', function () {
     return view('unifetch');
@@ -43,6 +48,10 @@ Route::middleware('auth')->group(function () {
             return redirect()->route('admin.dashboard');
         }
 
+        if (auth()->user()->isShop()) {
+            return redirect()->route('shop.dashboard');
+        }
+
         return view('dashboard');
     })->name('dashboard');
 
@@ -60,9 +69,30 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     // ---------------------------
 
-    // ---- Customers and runners (the admin can't order) ----
+    // ---- Shared by customers, runners and shops: history, order page, proofs, chat ----
+    Route::get('/history', [HistoryController::class, 'index'])->name('history');
+    Route::get('/orders/{order}', [OrderController::class, 'show'])->whereNumber('order')->name('orders.show');
+    Route::post('/orders/{order}/photos', [OrderPhotoController::class, 'store'])->name('orders.photos.store');
+    Route::get('/orders/{order}/photos/{photo}', [OrderPhotoController::class, 'show'])->name('orders.photos.show');
+    Route::get('/orders/{order}/messages', [OrderChatController::class, 'index'])->name('orders.chat.index');
+    Route::post('/orders/{order}/messages', [OrderChatController::class, 'store'])->name('orders.chat.store');
+
+    // ---- Shop accounts (the sellers) ----
+    Route::middleware('shop')->prefix('shop')->name('shop.')->group(function () {
+        Route::get('/', [Shop\DashboardController::class, 'index'])->name('dashboard');
+        Route::patch('/open', [Shop\ProductController::class, 'toggleOpen'])->name('open');
+        Route::get('/products', [Shop\ProductController::class, 'index'])->name('products');
+        Route::post('/products', [Shop\ProductController::class, 'store'])->name('products.store');
+        Route::get('/products/{product}/edit', [Shop\ProductController::class, 'edit'])->name('products.edit');
+        Route::put('/products/{product}', [Shop\ProductController::class, 'update'])->name('products.update');
+        Route::patch('/products/{product}/toggle', [Shop\ProductController::class, 'toggle'])->name('products.toggle');
+        Route::delete('/products/{product}', [Shop\ProductController::class, 'destroy'])->name('products.destroy');
+    });
+
+    // ---- Customers and runners (the admin and shops can't order) ----
     Route::middleware('shopper')->group(function () {
         Route::get('/menu', [MenuController::class, 'index'])->name('menu');
+        Route::get('/quote', QuoteController::class)->name('quote');
 
         Route::get('/cart', [CartController::class, 'index'])->name('cart');
         Route::post('/cart', [CartController::class, 'store'])->name('cart.store');
@@ -73,7 +103,6 @@ Route::middleware('auth')->group(function () {
         Route::get('/checkout', [OrderController::class, 'checkout'])->name('checkout');
         Route::get('/orders', [OrderController::class, 'index'])->name('orders');
         Route::post('/orders', [OrderController::class, 'store'])->name('orders.store');
-        Route::get('/orders/{order}', [OrderController::class, 'show'])->name('orders.show');
         Route::patch('/orders/{order}/cancel', [OrderController::class, 'cancel'])->name('orders.cancel');
 
         // Custom order: an item that isn't on the menu (part of Ordering)
@@ -119,6 +148,7 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/orders', [Admin\OrderController::class, 'index'])->name('orders');
         Route::get('/orders/{order}', [Admin\OrderController::class, 'show'])->name('orders.show');
+        Route::get('/orders/{order}/photos/{photo}', [Admin\OrderController::class, 'photo'])->name('orders.photo');
         Route::post('/orders/{order}/assign', [Admin\OrderController::class, 'assign'])->name('orders.assign');
         Route::post('/orders/{order}/release', [Admin\OrderController::class, 'release'])->name('orders.release');
         Route::post('/orders/{order}/start', [Admin\OrderController::class, 'start'])->name('orders.start');
@@ -126,6 +156,13 @@ Route::middleware('auth')->group(function () {
         Route::post('/orders/{order}/cancel', [Admin\OrderController::class, 'cancel'])->name('orders.cancel');
         Route::delete('/orders/{order}', [Admin\OrderController::class, 'destroy'])->name('orders.destroy');
 
+        Route::get('/reports', [Admin\ReportController::class, 'index'])->name('reports');
+        Route::get('/locations', [Admin\LocationController::class, 'index'])->name('locations');
+        Route::post('/locations', [Admin\LocationController::class, 'store'])->name('locations.store');
+        Route::put('/locations/{location}', [Admin\LocationController::class, 'update'])->name('locations.update');
+        Route::delete('/locations/{location}', [Admin\LocationController::class, 'destroy'])->name('locations.destroy');
+
+        Route::post('/vendors/{vendor}/account', [Admin\MenuController::class, 'saveAccount'])->name('vendors.account');
         Route::get('/menu', [Admin\MenuController::class, 'index'])->name('menu');
         Route::post('/vendors', [Admin\MenuController::class, 'storeVendor'])->name('vendors.store');
         Route::get('/vendors/{vendor}', [Admin\MenuController::class, 'showVendor'])->name('vendors.show');

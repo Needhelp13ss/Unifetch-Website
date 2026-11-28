@@ -23,6 +23,7 @@ class RunnersWalletAdminTest extends TestCase
     {
         parent::setUp();
         $this->seed(ShopSeeder::class);
+        Storage::fake();
     }
 
     /** A pending food order (one product, qty 1) for $customer. */
@@ -30,7 +31,7 @@ class RunnersWalletAdminTest extends TestCase
     {
         $item = CartItem::create(['user_id' => $customer->id, 'product_id' => Product::first()->id, 'quantity' => 1]);
         $this->actingAs($customer)->post('/orders', [
-            'items' => [$item->id], 'delivery_location' => 'Library', 'payment_method' => $payment,
+            'items' => [$item->id], 'location_id' => 1, 'payment_method' => $payment,
         ])->assertRedirect();
 
         return Order::latest('id')->firstOrFail();
@@ -197,13 +198,13 @@ class RunnersWalletAdminTest extends TestCase
     public function test_minimum_runner_fee_is_five_pesos_and_wording_says_ordering_not_food(): void
     {
         $user = User::factory()->create();
-        $payload = $this->errandPayload(['fee' => 5]);
+        $payload = $this->errandPayload(['fee' => 7]);
 
         $this->actingAs($user)->post('/errand-services', $this->errandPayload(['fee' => 4]))->assertSessionHasErrors('fee');
         $this->actingAs($user)->post('/errand-services', $payload)->assertRedirect()->assertSessionHasNoErrors();
-        $this->assertEquals(5, Order::firstOrFail()->total);
+        $this->assertEquals(10, Order::firstOrFail()->total);
         $this->actingAs($user)->post('/custom-order', [
-            'errand_title' => 'Water', 'errand_details' => 'Any', 'delivery_location' => 'Library', 'fee' => 5, 'payment_method' => 'cod',
+            'errand_title' => 'Water', 'errand_details' => 'Any', 'location_id' => 1, 'fee' => 7, 'payment_method' => 'cod',
         ])->assertSessionHasNoErrors();
 
         $this->flushSession();
@@ -276,7 +277,7 @@ class RunnersWalletAdminTest extends TestCase
         $order = $this->order($customer, 'cod');
         $owed = $order->cashToRemit();
         $this->assertGreaterThan(0, $owed);
-        $this->assertEquals($order->total - Order::DELIVERY_FEE, $owed);
+        $this->assertEquals($order->total - \App\Support\Pricing::BASE_FEE, $owed);
 
         // empty wallet: refused
         $this->actingAs($runner)->post("/jobs/{$order->id}/accept")->assertSessionHas('error');
@@ -285,8 +286,8 @@ class RunnersWalletAdminTest extends TestCase
         // top up, then it works
         $this->actingAs($runner)->post('/wallet/topup', ['amount' => 1000])->assertSessionHas('success');
         $this->actingAs($runner)->post("/jobs/{$order->id}/accept")->assertSessionHas('success');
-        $this->actingAs($runner)->post("/jobs/{$order->id}/start")->assertSessionHas('success');
-        $this->actingAs($runner)->post("/jobs/{$order->id}/complete")->assertSessionHas('success');
+        $this->actingAs($runner)->post("/jobs/{$order->id}/start", ['photo' => UploadedFile::fake()->image('p.jpg')])->assertSessionHas('success');
+        $this->actingAs($runner)->post("/jobs/{$order->id}/complete", ['photo' => UploadedFile::fake()->image('p.jpg')])->assertSessionHas('success');
 
         $order->refresh();
         $this->assertSame('delivered', $order->status);
@@ -305,10 +306,10 @@ class RunnersWalletAdminTest extends TestCase
         $this->assertEquals(1000 - $order->total, $customer->fresh()->wallet_balance);
 
         $this->actingAs($runner)->post("/jobs/{$order->id}/accept")->assertSessionHas('success');
-        $this->actingAs($runner)->post("/jobs/{$order->id}/start");
-        $this->actingAs($runner)->post("/jobs/{$order->id}/complete");
+        $this->actingAs($runner)->post("/jobs/{$order->id}/start", ['photo' => UploadedFile::fake()->image('p.jpg')]);
+        $this->actingAs($runner)->post("/jobs/{$order->id}/complete", ['photo' => UploadedFile::fake()->image('p.jpg')]);
 
-        $this->assertEquals(Order::DELIVERY_FEE, $runner->fresh()->wallet_balance);
+        $this->assertEquals(\App\Support\Pricing::BASE_FEE, $runner->fresh()->wallet_balance);
         $this->assertSame(0, WalletTransaction::where('type', 'remittance')->count());
     }
 
@@ -336,8 +337,8 @@ class RunnersWalletAdminTest extends TestCase
         $order = $this->order($customer);
         $this->actingAs($a)->post("/jobs/{$order->id}/accept");
 
-        $this->actingAs($b)->post("/jobs/{$order->id}/start")->assertForbidden();
-        $this->actingAs($customer)->post("/jobs/{$order->id}/start")->assertRedirect('/dashboard');
+        $this->actingAs($b)->post("/jobs/{$order->id}/start", ['photo' => UploadedFile::fake()->image('p.jpg')])->assertForbidden();
+        $this->actingAs($customer)->post("/jobs/{$order->id}/start", ['photo' => UploadedFile::fake()->image('p.jpg')])->assertRedirect('/dashboard');
     }
 
     // ---------------- wallet ----------------
@@ -360,7 +361,7 @@ class RunnersWalletAdminTest extends TestCase
         $item = CartItem::create(['user_id' => $user->id, 'product_id' => Product::first()->id, 'quantity' => 1]);
 
         $this->actingAs($user)->post('/orders', [
-            'items' => [$item->id], 'delivery_location' => 'Library', 'payment_method' => 'wallet',
+            'items' => [$item->id], 'location_id' => 1, 'payment_method' => 'wallet',
         ])->assertSessionHas('error');
 
         $this->assertSame(0, Order::count());
@@ -391,14 +392,14 @@ class RunnersWalletAdminTest extends TestCase
 
         $this->actingAs($user)->post('/custom-order', [
             'errand_title' => 'Print my notes', 'errand_details' => '12 pages, B&W',
-            'delivery_location' => 'Library', 'fee' => 50, 'payment_method' => 'cod', 'budget' => 60,
+            'location_id' => 1, 'fee' => 50, 'payment_method' => 'cod', 'budget' => 60,
         ])->assertRedirect();
 
         $o = Order::firstOrFail();
         $this->assertSame('custom', $o->type);
         $this->assertSame('pending', $o->status);
-        $this->assertEquals(50, $o->total);
-        $this->assertEquals(0, $o->cashToRemit());
+        $this->assertEquals(53, $o->total);
+        $this->assertEquals(3, $o->cashToRemit());
         $this->actingAs($user)->get("/orders/{$o->id}")->assertSee('Print my notes')->assertSee('Looking for runners');
 
         // visible to runners on the board
@@ -411,11 +412,11 @@ class RunnersWalletAdminTest extends TestCase
         $user = User::factory()->create();
 
         $this->actingAs($user)->post('/custom-order', [
-            'errand_title' => 'x', 'errand_details' => 'y', 'delivery_location' => 'z', 'fee' => 4, 'payment_method' => 'cod',
+            'errand_title' => 'x', 'errand_details' => 'y', 'location_id' => 1, 'fee' => 4, 'payment_method' => 'cod',
         ])->assertSessionHasErrors('fee');
 
         $this->actingAs($user)->post('/custom-order', ['fee' => 50, 'payment_method' => 'cod'])
-            ->assertSessionHasErrors(['errand_title', 'errand_details', 'delivery_location']);
+            ->assertSessionHasErrors(['errand_title', 'errand_details', 'location_id']);
 
         $this->assertSame(0, Order::count());
     }
@@ -426,12 +427,12 @@ class RunnersWalletAdminTest extends TestCase
         Wallet::credit($user, 100, 'topup', 'test');
 
         $this->actingAs($user)->post('/custom-order', [
-            'errand_title' => 'Buy charger', 'errand_details' => 'USB-C', 'delivery_location' => 'Library',
+            'errand_title' => 'Buy charger', 'errand_details' => 'USB-C', 'location_id' => 1,
             'fee' => 60, 'payment_method' => 'wallet',
         ])->assertRedirect();
 
         $o = Order::firstOrFail();
-        $this->assertEquals(40, $user->fresh()->wallet_balance);
+        $this->assertEquals(37, $user->fresh()->wallet_balance);
 
         $this->actingAs($user)->patch("/orders/{$o->id}/cancel");
         $this->assertEquals(100, $user->fresh()->wallet_balance);
@@ -459,7 +460,7 @@ class RunnersWalletAdminTest extends TestCase
         }
         $this->actingAs($admin)->get('/dashboard')->assertRedirect('/admin');
         $this->actingAs($admin)->postJson('/cart', ['product_id' => Product::first()->id])->assertForbidden();
-        $this->actingAs($admin)->post('/orders', ['items' => [1], 'delivery_location' => 'x', 'payment_method' => 'cod'])->assertRedirect('/admin');
+        $this->actingAs($admin)->post('/orders', ['items' => [1], 'location_id' => 1, 'payment_method' => 'cod'])->assertRedirect('/admin');
         $this->assertSame(0, Order::count());
     }
 
@@ -581,7 +582,7 @@ class RunnersWalletAdminTest extends TestCase
         return $over + [
             'errand_category' => 'Wait in line', 'errand_title' => 'Line up at the cashier',
             'errand_details' => 'Pay my balance, I will send the exact amount.',
-            'pickup_location' => 'Cashier, Main Building', 'delivery_location' => 'Library',
+            'pickup_location' => 'Cashier, Main Building', 'location_id' => 1,
             'fee' => 80, 'payment_method' => 'cod',
         ];
     }
@@ -589,7 +590,7 @@ class RunnersWalletAdminTest extends TestCase
     public function test_customer_can_post_an_errand_and_a_runner_sees_it(): void
     {
         $user = User::factory()->create();
-        $runner = User::factory()->runner()->create();
+        $runner = User::factory()->runner()->create(['wallet_balance' => 100]);
 
         $this->actingAs($user)->get('/errand-services')->assertOk()
             ->assertSee('Let a runner do it for you')->assertSee('Pick up a parcel')->assertSee('Wait in line');
@@ -600,20 +601,20 @@ class RunnersWalletAdminTest extends TestCase
         $this->assertSame('errand', $o->type);
         $this->assertSame('Wait in line', $o->errand_category);
         $this->assertSame('pending', $o->status);
-        $this->assertEquals(80, $o->total);
-        $this->assertEquals(0, $o->cashToRemit());
+        $this->assertEquals(83, $o->total);
+        $this->assertEquals(3, $o->cashToRemit());
 
         $this->actingAs($user)->get("/orders/{$o->id}")->assertSee('Looking for runners')->assertSee('Line up at the cashier')->assertSee('Cashier, Main Building');
         $this->actingAs($user)->get('/orders')->assertSee('Errand');
 
         $this->actingAs($runner)->get('/jobs')->assertSee('Line up at the cashier')->assertSee('Wait in line')->assertSee('Go to');
 
-        // a runner takes it and finishes it: the cash fee stays with the runner, no remittance
+        // a runner takes it and finishes it: the runner keeps the fee and hands over the 3 peso service fee
         $this->actingAs($runner)->post("/jobs/{$o->id}/accept")->assertSessionHas('success');
-        $this->actingAs($runner)->post("/jobs/{$o->id}/start");
-        $this->actingAs($runner)->post("/jobs/{$o->id}/complete")->assertSessionHas('success');
+        $this->actingAs($runner)->post("/jobs/{$o->id}/start", ['photo' => UploadedFile::fake()->image('p.jpg')]);
+        $this->actingAs($runner)->post("/jobs/{$o->id}/complete", ['photo' => UploadedFile::fake()->image('p.jpg')])->assertSessionHas('success');
         $this->assertSame('delivered', $o->fresh()->status);
-        $this->assertSame(0, WalletTransaction::where('type', 'remittance')->count());
+        $this->assertEquals(3, WalletTransaction::where('type', 'remittance')->sum('amount') * -1 ?: WalletTransaction::where('type', 'remittance')->sum('amount'));
     }
 
     public function test_errand_needs_a_valid_category_locations_and_fee(): void
@@ -623,7 +624,7 @@ class RunnersWalletAdminTest extends TestCase
         $this->actingAs($user)->post('/errand-services', $this->errandPayload(['errand_category' => 'Hack the planet']))->assertSessionHasErrors('errand_category');
         $this->actingAs($user)->post('/errand-services', $this->errandPayload(['pickup_location' => '']))->assertSessionHasErrors('pickup_location');
         $this->actingAs($user)->post('/errand-services', $this->errandPayload(['fee' => 4]))->assertSessionHasErrors('fee');
-        $this->actingAs($user)->post('/errand-services', [])->assertSessionHasErrors(['errand_category', 'errand_title', 'errand_details', 'pickup_location', 'delivery_location', 'fee']);
+        $this->actingAs($user)->post('/errand-services', [])->assertSessionHasErrors(['errand_category', 'errand_title', 'errand_details', 'pickup_location', 'location_id', 'fee']);
         $this->assertSame(0, Order::count());
     }
 
@@ -635,11 +636,11 @@ class RunnersWalletAdminTest extends TestCase
 
         $this->actingAs($user)->post('/errand-services', $this->errandPayload(['errand_category' => 'Pick up a parcel', 'payment_method' => 'wallet']))->assertRedirect();
         $o = Order::firstOrFail();
-        $this->assertEquals(120, $user->fresh()->wallet_balance);
+        $this->assertEquals(117, $user->fresh()->wallet_balance);
 
         $this->actingAs($runner)->post("/jobs/{$o->id}/accept");
-        $this->actingAs($runner)->post("/jobs/{$o->id}/start");
-        $this->actingAs($runner)->post("/jobs/{$o->id}/complete");
+        $this->actingAs($runner)->post("/jobs/{$o->id}/start", ['photo' => UploadedFile::fake()->image('p.jpg')]);
+        $this->actingAs($runner)->post("/jobs/{$o->id}/complete", ['photo' => UploadedFile::fake()->image('p.jpg')]);
         $this->assertEquals(80, $runner->fresh()->wallet_balance);
     }
 
@@ -648,7 +649,7 @@ class RunnersWalletAdminTest extends TestCase
         $user = User::factory()->create();
 
         $this->actingAs($user)->post('/custom-order', [
-            'errand_title' => 'Chicken sandwich', 'errand_details' => 'No mayo', 'delivery_location' => 'Library',
+            'errand_title' => 'Chicken sandwich', 'errand_details' => 'No mayo', 'location_id' => 1,
             'fee' => 40, 'payment_method' => 'cod',
         ])->assertRedirect();
         $this->actingAs($user)->post('/errand-services', $this->errandPayload())->assertRedirect();

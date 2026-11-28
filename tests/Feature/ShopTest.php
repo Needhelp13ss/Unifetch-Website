@@ -110,7 +110,7 @@ class ShopTest extends TestCase
 
         $this->actingAs($user)->post('/orders', [
             'items' => [$ia->id, $ic->id],
-            'delivery_location' => 'Annex Building, Room 211',
+            'location_id' => 1,
             'notes' => 'No onions',
             'payment_method' => 'cod',
         ])->assertRedirect();
@@ -121,7 +121,7 @@ class ShopTest extends TestCase
         $this->assertSame($user->id, $order->user_id);
         $this->assertSame('pending', $order->status);
         $this->assertEquals($expectedSubtotal, $order->subtotal);
-        $this->assertEquals($expectedSubtotal + Order::DELIVERY_FEE, $order->total);
+        $this->assertEquals($expectedSubtotal + \App\Support\Pricing::BASE_FEE + \App\Support\Pricing::SERVICE_FEE, $order->total);
         $this->assertCount(2, $order->items);
         $this->assertSame(['cod'], [$order->payment_method]);
 
@@ -135,9 +135,9 @@ class ShopTest extends TestCase
         $item = CartItem::create(['user_id' => $user->id, 'product_id' => Product::first()->id, 'quantity' => 1]);
 
         $this->actingAs($user)->post('/orders', ['items' => [$item->id], 'payment_method' => 'cod'])
-            ->assertSessionHasErrors('delivery_location');
+            ->assertSessionHasErrors('location_id');
 
-        $this->actingAs($user)->post('/orders', ['items' => [$item->id], 'delivery_location' => 'Library', 'payment_method' => 'bitcoin'])
+        $this->actingAs($user)->post('/orders', ['items' => [$item->id], 'location_id' => 1, 'payment_method' => 'bitcoin'])
             ->assertSessionHasErrors('payment_method');
 
         $this->assertSame(0, Order::count());
@@ -151,11 +151,11 @@ class ShopTest extends TestCase
         $item = CartItem::create(['user_id' => $user->id, 'product_id' => $product->id, 'quantity' => 1]);
 
         $this->actingAs($user)->post('/orders', [
-            'items' => [$item->id], 'delivery_location' => 'Library', 'payment_method' => 'cod',
+            'items' => [$item->id], 'location_id' => 1, 'payment_method' => 'cod',
             'total' => 1, 'subtotal' => 1, 'price' => 1,
         ]);
 
-        $this->assertEquals($product->price + Order::DELIVERY_FEE, Order::first()->total);
+        $this->assertEquals($product->price + \App\Support\Pricing::BASE_FEE + \App\Support\Pricing::SERVICE_FEE, Order::first()->total);
     }
 
     public function test_cannot_order_someone_elses_cart_items(): void
@@ -165,7 +165,7 @@ class ShopTest extends TestCase
         $item = CartItem::create(['user_id' => $other->id, 'product_id' => Product::first()->id, 'quantity' => 1]);
 
         $this->actingAs($user)->post('/orders', [
-            'items' => [$item->id], 'delivery_location' => 'Library', 'payment_method' => 'cod',
+            'items' => [$item->id], 'location_id' => 1, 'payment_method' => 'cod',
         ])->assertRedirect('/cart');
 
         $this->assertSame(0, Order::count());
@@ -178,7 +178,7 @@ class ShopTest extends TestCase
         $other = User::factory()->create();
         $item = CartItem::create(['user_id' => $user->id, 'product_id' => Product::first()->id, 'quantity' => 1]);
 
-        $this->actingAs($user)->post('/orders', ['items' => [$item->id], 'delivery_location' => 'Library', 'payment_method' => 'cod']);
+        $this->actingAs($user)->post('/orders', ['items' => [$item->id], 'location_id' => 1, 'payment_method' => 'cod']);
         $order = Order::firstOrFail();
 
         $this->actingAs($user)->get('/orders')->assertOk()->assertSee($order->order_number);

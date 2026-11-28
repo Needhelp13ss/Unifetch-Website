@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\PricesDeliveries;
+use App\Models\CampusLocation;
 use App\Models\Order;
+use App\Support\Pricing;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Support\Wallet;
@@ -11,11 +14,7 @@ use Illuminate\Validation\Rule;
 
 class OrderController extends Controller
 {
-    /** Campus places suggested in the delivery location box (users can still type their own). */
-    public const LOCATION_SUGGESTIONS = [
-        'Main Building', 'Annex Building', 'Library', 'Canteen',
-        'Gymnasium', 'Main Gate', 'Clinic', 'Parking Area',
-    ];
+    use PricesDeliveries;
 
     /** Step 2: review the ticked items, then choose delivery spot and payment. */
     public function checkout(Request $request)
@@ -27,16 +26,18 @@ class OrderController extends Controller
         }
 
         $subtotal = $items->sum(fn ($i) => $i->line_total);
+        $places = $this->places();
+        $default = $places->firstWhere('name', $request->user()->campus_location);
 
         return view('checkout', [
             'items' => $items,
             'subtotal' => $subtotal,
-            'deliveryFee' => Order::DELIVERY_FEE,
-            'total' => $subtotal + Order::DELIVERY_FEE,
+            'quote' => Pricing::quote($this->shopPlaces($items), $default),
+            'fromIds' => $this->shopPlaces($items)->filter()->pluck('id')->unique()->implode(','),
             'paymentMethods' => Order::PAYMENT_METHODS,
             'walletBalance' => (float) $request->user()->wallet_balance,
-            'locations' => self::LOCATION_SUGGESTIONS,
-            'defaultLocation' => $request->user()->campus_location,
+            'places' => $places,
+            'defaultPlace' => $default?->id,
         ]);
     }
 
@@ -46,11 +47,13 @@ class OrderController extends Controller
         $data = $request->validate([
             'items' => ['required', 'array', 'min:1'],
             'items.*' => ['integer'],
-            'delivery_location' => ['required', 'string', 'max:120'],
+            'location_id' => ['required', 'integer', 'exists:campus_locations,id'],
+            'delivery_details' => ['nullable', 'string', 'max:80'],
             'notes' => ['nullable', 'string', 'max:255'],
             'payment_method' => ['required', Rule::in(array_keys(Order::PAYMENT_METHODS))],
         ], [
-            'delivery_location.required' => 'Please tell us where to deliver your order.',
+            'location_id.required' => 'Please pick where to deliver your order.',
+            'location_id.exists' => 'Please pick one of the campus places.',
             'payment_method.required' => 'Please choose a payment method.',
         ]);
 
@@ -68,23 +71,28 @@ class OrderController extends Controller
         }
 
         $subtotal = $items->sum(fn ($i) => $i->line_total);
+        $to = CampusLocation::findOrFail($data['location_id']);
+        $quote = Pricing::quote($this->shopPlaces($items), $to);
+        $total = $subtotal + $quote['total_fees'];
 
         if ($data['payment_method'] === 'wallet'
-            && Wallet::cents($request->user()->wallet_balance) < Wallet::cents($subtotal + Order::DELIVERY_FEE)) {
+            && Wallet::cents($request->user()->wallet_balance) < Wallet::cents($total)) {
             return back()->withInput()->with('error', 'Your wallet balance is too low for this order. Top up your wallet or pay with cash.');
         }
 
         try {
-            $order = DB::transaction(function () use ($request, $data, $items, $subtotal) {
+            $order = DB::transaction(function () use ($request, $data, $items, $subtotal, $quote, $total, $to) {
                 $order = Order::create([
                     'user_id' => $request->user()->id,
                     'order_number' => Order::newNumber(),
                     'status' => 'pending',
                     'subtotal' => $subtotal,
-                    'delivery_fee' => Order::DELIVERY_FEE,
-                    'total' => $subtotal + Order::DELIVERY_FEE,
+                    'delivery_fee' => $quote['runner_fee'],
+                    'service_fee' => $quote['service_fee'],
+                    'distance_m' => $quote['meters'],
+                    'total' => $total,
                     'payment_method' => $data['payment_method'],
-                    'delivery_location' => $data['delivery_location'],
+                    'delivery_location' => $this->deliveryLabel($to, $data['delivery_details'] ?? null),
                     'notes' => $data['notes'] ?? null,
                 ]);
 
@@ -127,9 +135,10 @@ class OrderController extends Controller
 
     public function show(Request $request, Order $order)
     {
-        abort_unless($order->user_id === $request->user()->id, 403);
+        $order->load('items', 'runner', 'user', 'photos.user');
+        abort_unless($order->canBeSeenBy($request->user()), 403);
 
-        return view('orders.show', ['order' => $order->load('items', 'runner')]);
+        return view('orders.show', ['order' => $order, 'me' => $request->user()]);
     }
 
     public function cancel(Request $request, Order $order)
@@ -149,6 +158,12 @@ class OrderController extends Controller
         $refund = $order->payment_method === 'wallet' ? ' Your payment was returned to your wallet.' : '';
 
         return back()->with('success', "Order {$order->order_number} was cancelled.{$refund}");
+    }
+
+    /** The campus place of every shop in the selected items. */
+    private function shopPlaces($items)
+    {
+        return $items->map(fn ($i) => $i->product->vendor->place)->unique('id')->values();
     }
 
     /** Cart items of the current user, limited to the given ids. */

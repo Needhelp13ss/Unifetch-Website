@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Order;
+use App\Models\OrderPhoto;
 use App\Http\Controllers\ProfileController;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -107,7 +108,7 @@ class RunnerController extends Controller
             ->oldest()
             ->get();
 
-        $mine = $runner->runnerOrders()->with('items', 'user')
+        $mine = $runner->runnerOrders()->with('items', 'user', 'photos')
             ->whereIn('status', ['preparing', 'on_the_way'])->oldest('accepted_at')->get();
 
         $done = $runner->runnerOrders()->with('items')
@@ -144,6 +145,10 @@ class RunnerController extends Controller
     {
         $this->mine($request, $order);
 
+        if ($error = $this->requirePhoto($request, $order, 'runner_pickup', 'Take a photo of the order you picked up before you set off.')) {
+            return back()->with('error', $error);
+        }
+
         return $this->act($request, $order, fn () => $order->startDelivery(), 'Nice! The customer sees that you are on the way.');
     }
 
@@ -151,11 +156,30 @@ class RunnerController extends Controller
     {
         $this->mine($request, $order);
 
+        if ($error = $this->requirePhoto($request, $order, 'runner_delivery', 'Take a photo that shows you delivered it before you mark it done.')) {
+            return back()->with('error', $error);
+        }
+
         $note = $order->payment_method === 'wallet'
             ? 'Delivered! Your delivery fee was added to your wallet.'
             : 'Delivered! The cash you owe UniFetch was taken from your wallet.';
 
         return $this->act($request, $order, fn () => $order->complete(), $note);
+    }
+
+    /** Saves the photo sent with the form (if any), then checks that the proof exists. Returns an error text or null. */
+    private function requirePhoto(Request $request, Order $order, string $kind, string $missing): ?string
+    {
+        if ($request->hasFile('photo')) {
+            $request->validate(['photo' => OrderPhoto::RULES], [
+                'photo.image' => 'That file is not a photo.',
+                'photo.mimes' => 'The photo must be a JPG, PNG or WebP image.',
+                'photo.max' => 'The photo must be 6 MB or smaller.',
+            ]);
+            OrderPhoto::saveFor($order, $request->user(), $kind, $request->file('photo'));
+        }
+
+        return $order->photos()->where('kind', $kind)->exists() ? null : $missing;
     }
 
     private function mine(Request $request, Order $order): void

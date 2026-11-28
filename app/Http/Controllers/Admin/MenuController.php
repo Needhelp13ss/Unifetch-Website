@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\CampusLocation;
 use App\Models\Product;
+use App\Models\User;
 use App\Models\Vendor;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -13,7 +15,10 @@ class MenuController extends Controller
 {
     public function index()
     {
-        return view('admin.menu', ['vendors' => Vendor::withCount('products')->orderBy('name')->get()]);
+        return view('admin.menu', [
+            'vendors' => Vendor::with('owner', 'place')->withCount('products')->orderBy('name')->get(),
+            'places' => CampusLocation::orderBy('name')->get(),
+        ]);
     }
 
     public function storeVendor(Request $request)
@@ -29,7 +34,39 @@ class MenuController extends Controller
             'vendor' => $vendor,
             'products' => $vendor->products()->orderBy('category')->orderBy('name')->get(),
             'categories' => Product::CATEGORIES,
+            'places' => CampusLocation::orderBy('name')->get(),
+            'owner' => $vendor->owner,
         ]);
+    }
+
+    /** Create the login for the shop's seller, or set a new password for the existing one. */
+    public function saveAccount(Request $request, Vendor $vendor)
+    {
+        $owner = $vendor->owner;
+
+        $data = $request->validate([
+            'name' => [$owner ? 'nullable' : 'required', 'string', 'max:100'],
+            'email' => [$owner ? 'nullable' : 'required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($owner?->id)],
+            'password' => [$owner && !$request->filled('password') ? 'nullable' : 'required', 'string', 'min:8', 'max:100'],
+        ], [
+            'email.unique' => 'That email already has an account.',
+            'password.min' => 'The password needs at least 8 characters.',
+        ]);
+
+        if ($owner) {
+            $owner->forceFill(array_filter([
+                'name' => $data['name'] ?? null,
+                'email' => $data['email'] ?? null,
+                'password' => $data['password'] ?? null,
+            ]))->save();
+
+            return back()->with('success', 'Shop account updated.');
+        }
+
+        $user = new User(['name' => $data['name'], 'email' => $data['email'], 'password' => $data['password']]);
+        $user->forceFill(['role' => 'shop', 'vendor_id' => $vendor->id])->save();
+
+        return back()->with('success', "Shop account created. {$data['email']} can now log in and manage {$vendor->name}.");
     }
 
     public function updateVendor(Request $request, Vendor $vendor)
@@ -87,6 +124,7 @@ class MenuController extends Controller
             'name' => ['required', 'string', 'max:100'],
             'tagline' => ['nullable', 'string', 'max:160'],
             'location' => ['nullable', 'string', 'max:120'],
+            'campus_location_id' => ['nullable', 'integer', 'exists:campus_locations,id'],
         ]);
     }
 

@@ -40,7 +40,7 @@ class User extends Authenticatable
         'remember_token',
     ];
 
-    public const ROLES = ['customer' => 'Customer', 'runner' => 'Runner', 'admin' => 'Admin'];
+    public const ROLES = ['customer' => 'Customer', 'runner' => 'Runner', 'shop' => 'Shop', 'admin' => 'Admin'];
 
     /** Role and wallet are never mass-assigned from forms; code sets them on purpose. */
     protected function casts(): array
@@ -51,6 +51,7 @@ class User extends Authenticatable
             'birthday' => 'date',
             'show_gender' => 'boolean',
             'runner_applied_at' => 'datetime',
+            'last_active_at' => 'datetime',
             'enrolled_confirmed' => 'boolean',
             'wallet_balance' => 'decimal:2',
         ];
@@ -73,6 +74,17 @@ class User extends Authenticatable
     public function isVerifiedStudent(): bool
     {
         return $this->isRunner() && $this->enrolled_confirmed && $this->id_photo_path !== null;
+    }
+
+    /** A shop account: the seller of the products. Sells and hands over, can't order. */
+    public function isShop(): bool
+    {
+        return $this->role === 'shop';
+    }
+
+    public function vendor(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Vendor::class);
     }
 
     public function isAdmin(): bool

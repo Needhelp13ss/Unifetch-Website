@@ -65,3 +65,27 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: .92rem; }
 .id-link:hover { text-decoration: underline; }
 .ok-badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: .72rem; font-weight: 800; background: #e6f7ee; color: #157347; vertical-align: middle; }
 .verify b, .item-row .verify b { display: inline; }
+
+/* ---- Reports: charts ---- */
+.chart-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
+.chart-card { padding: 22px; min-width: 0; }
+.chart-card.wide { grid-column: 1 / -1; }
+.chart-card h2 { margin: 0 0 14px; font-size: 1.05rem; }
+.chart-card h2 small { display: block; color: var(--muted); font-weight: 500; font-size: .8rem; margin-top: 2px; }
+.chart-svg { width: 100%; height: auto; display: block; }
+.chart-donut { width: 190px; height: 190px; display: block; margin: 0 auto 10px; }
+.chart-legend { list-style: none; padding: 0; margin: 8px 0 0; display: flex; flex-wrap: wrap; gap: 6px 16px; justify-content: center; font-size: .88rem; color: #3d4256; }
+.chart-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; }
+.role-table { margin-top: 14px; border-top: 1px solid var(--line); }
+.role-table div { display: flex; justify-content: space-between; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--line); font-size: .9rem; }
+.role-table span { color: var(--muted); }
+.big-num { font-size: 1.7rem; font-weight: 800; margin: -4px 0 8px; }
+.big-num small { font-size: .8rem; font-weight: 500; color: var(--muted); }
+.hbars { display: grid; gap: 12px; }
+.hbar { display: grid; grid-template-columns: minmax(70px, 130px) 1fr auto; gap: 10px; align-items: center; font-size: .9rem; }
+.hb-l { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+.hb-t { background: #EEF0F4; border-radius: 999px; height: 14px; overflow: hidden; }
+.hb-f { display: block; height: 100%; border-radius: 999px; }
+.hb-v { min-width: 38px; text-align: right; }
+.chart-empty { color: var(--muted); margin: 10px 0; }
+@media (max-width: 900px) { .chart-grid { grid-template-columns: minmax(0, 1fr); } }

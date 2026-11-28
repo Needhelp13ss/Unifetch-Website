@@ -15,12 +15,29 @@
             <div class="grid-form">
                 <div class="field"><label class="lbl" for="name">Name</label><input class="input" id="name" name="name" value="{{ old('name', $vendor->name) }}" maxlength="100" required></div>
                 <div class="field"><label class="lbl" for="tagline">Tagline</label><input class="input" id="tagline" name="tagline" value="{{ old('tagline', $vendor->tagline) }}" maxlength="160"></div>
-                <div class="field"><label class="lbl" for="location">Location</label><input class="input" id="location" name="location" value="{{ old('location', $vendor->location) }}" maxlength="120"></div>
+                <div class="field"><label class="lbl" for="location">Location (text)</label><input class="input" id="location" name="location" value="{{ old('location', $vendor->location) }}" maxlength="120"></div>
+                <div class="field"><label class="lbl" for="campus_location_id">Campus place (for distance fee)</label>
+                    <select class="input" id="campus_location_id" name="campus_location_id"><option value="">Not set</option>
+                        @foreach($places as $pl)<option value="{{ $pl->id }}" @selected(old('campus_location_id', $vendor->campus_location_id) == $pl->id)>{{ $pl->name }}</option>@endforeach
+                    </select></div>
             </div>
             <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:16px;flex-wrap:wrap">
                 <label class="check-line"><input type="checkbox" name="is_open" value="1" {{ $vendor->is_open ? 'checked' : '' }}> Open (shown on the menu)</label>
                 <button class="btn btn-dark btn-sm" type="submit">Save vendor</button>
             </div>
+        </form>
+    </div></section>
+
+    <section class="panel" style="margin-bottom:24px"><div class="sec">
+        <h2 class="sub">Shop account (the seller's login)</h2>
+        @if($owner)<p class="mutedp">Logs in as <b>{{ $owner->email }}</b>. Leave the password empty to keep it.</p>@else<p class="mutedp">No login yet. Create one so the seller can manage this shop and upload handover photos.</p>@endif
+        <form method="POST" action="{{ route('admin.vendors.account', $vendor) }}">@csrf
+            <div class="grid-form">
+                <div class="field"><label class="lbl" for="a_name">Seller name</label><input class="input" id="a_name" name="name" value="{{ old('name', $owner?->name) }}" maxlength="100" {{ $owner ? '' : 'required' }}></div>
+                <div class="field"><label class="lbl" for="a_email">Email</label><input class="input" id="a_email" name="email" type="email" value="{{ old('email', $owner?->email) }}" maxlength="255" {{ $owner ? '' : 'required' }}></div>
+                <div class="field"><label class="lbl" for="a_pw">{{ $owner ? 'New password' : 'Password' }}</label><input class="input" id="a_pw" name="password" type="password" minlength="8" autocomplete="new-password" {{ $owner ? '' : 'required' }}></div>
+            </div>
+            <div style="margin-top:16px;text-align:right"><button class="btn btn-dark btn-sm" type="submit">{{ $owner ? 'Save account' : 'Create shop account' }}</button></div>
         </form>
     </div></section>
 

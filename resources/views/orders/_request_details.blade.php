@@ -7,4 +7,8 @@
     @if($order->pickup_location)<div><small>{{ $errand ? 'Where the runner goes' : 'Get it from' }}</small><b>{{ $order->pickup_location }}</b></div>@endif
     @if($order->budget !== null)<div><small>{{ $errand ? 'Money to pay on your behalf' : 'Item budget' }}</small><b>{{ \App\Support\Money::format($order->budget) }} <span style="font-weight:400;color:var(--muted)">(settled directly with the runner)</span></b></div>@endif
 </div>
-<div style="padding:6px 22px 18px"><div class="sum-line total"><span>Runner fee</span><span>{{ \App\Support\Money::format($order->total) }}</span></div></div>
+<div style="padding:6px 22px 18px">
+    <div class="sum-line"><span>Runner fee</span><span>{{ \App\Support\Money::format($order->delivery_fee) }}</span></div>
+    <div class="sum-line"><span>Service fee</span><span>{{ \App\Support\Money::format($order->service_fee) }}</span></div>
+    <div class="sum-line total"><span>Total</span><span>{{ \App\Support\Money::format($order->total) }}</span></div>
+</div>

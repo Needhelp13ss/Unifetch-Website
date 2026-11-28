@@ -16,6 +16,7 @@
     // "placed" is always finished; the order's own status is the step that is happening now
     $at = array_search($order->status, $keys);
     $runner = $order->runner;
+    $isCustomer = $me->id === $order->user_id;
 @endphp
 <main class="wrap page">
     <div class="page-head">
@@ -24,7 +25,7 @@
             <h1>{{ $order->order_number }}</h1>
             <p>Placed {{ $order->created_at->format('M j, Y · g:i A') }}</p>
         </div>
-        <a class="link-arrow" href="{{ route('orders') }}">← All orders</a>
+        <a class="link-arrow" href="{{ $me->isShop() ? route('shop.dashboard') : route('history') }}">← {{ $me->isShop() ? 'Shop orders' : 'History' }}</a>
     </div>
 
     {{-- Progress --}}
@@ -42,7 +43,9 @@
                 @endforeach
             </div>
 
-            @if($order->status === 'pending')
+            @if(!$isCustomer)
+                {{-- the runner and the shop see the people on the order below --}}
+            @elseif($order->status === 'pending')
                 <div class="runner-note wait">
                     <span class="em">🔎</span>
                     <div><b>Looking for a runner…</b>
@@ -82,7 +85,8 @@
                 @endforeach
                 <div style="padding:6px 22px 18px">
                     <div class="sum-line"><span>Subtotal</span><span>{{ \App\Support\Money::format($order->subtotal) }}</span></div>
-                    <div class="sum-line"><span>Delivery fee</span><span>{{ \App\Support\Money::format($order->delivery_fee) }}</span></div>
+                    <div class="sum-line"><span>Runner fee @if($order->distance_m)<small style="color:var(--muted)">({{ $order->distance_m }} m)</small>@endif</span><span>{{ \App\Support\Money::format($order->delivery_fee) }}</span></div>
+                    <div class="sum-line"><span>Service fee</span><span>{{ \App\Support\Money::format($order->service_fee) }}</span></div>
                     <div class="sum-line total"><span>Total</span><span>{{ \App\Support\Money::format($order->total) }}</span></div>
                 </div>
             @endif
@@ -91,11 +95,14 @@
         <aside class="panel">
             <div class="panel-head"><h2>Delivery &amp; payment</h2></div>
             <div class="kv">
+                <div><small>Customer</small><b>{{ $order->user->name }}</b></div>
+                <div><small>Runner</small><b>{{ $runner?->name ?? 'Not taken yet' }}</b></div>
+                @if(!$order->isRequest())<div><small>Shop</small><b>{{ implode(', ', $order->shopNames()) }}</b></div>@endif
                 <div><small>Deliver to</small><b>{{ $order->delivery_location }}</b></div>
                 <div><small>Payment</small><b>{{ $order->payment_label }}</b></div>
                 @if($order->notes)<div><small>Notes</small><b>{{ $order->notes }}</b></div>@endif
             </div>
-            @if($order->canBeCancelled())
+            @if($isCustomer && $order->canBeCancelled())
                 <form method="POST" action="{{ route('orders.cancel', $order) }}" style="padding:0 22px 22px"
                       onsubmit="return confirm('Cancel this order?')">
                     @csrf @method('PATCH')
@@ -104,5 +111,10 @@
             @endif
         </aside>
     </div>
+
+    @include('orders._proof', ['readonly' => false])
+    @if($order->hasChat() && ($isCustomer || $me->id === $order->runner_id))
+        @include('orders._chat')
+    @endif
 </main>
 @endsection

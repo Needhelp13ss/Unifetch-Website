@@ -19,7 +19,7 @@ class CartController extends Controller
 
         return view('cart', [
             'items' => $items,
-            'deliveryFee' => Order::DELIVERY_FEE,
+            'deliveryFee' => \App\Support\Pricing::BASE_FEE + \App\Support\Pricing::SERVICE_FEE,
         ]);
     }
 

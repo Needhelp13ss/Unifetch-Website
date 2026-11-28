@@ -85,7 +85,7 @@
                 <h2>Order summary</h2>
                 <div class="sum-line"><span>Selected items</span><span id="sumCount">0</span></div>
                 <div class="sum-line"><span>Subtotal</span><span id="sumSub">₱0</span></div>
-                <div class="sum-line"><span>Delivery fee</span><span id="sumFee">₱0</span></div>
+                <div class="sum-line"><span>Fees <small style="color:var(--muted)">(from, final at checkout)</small></span><span id="sumFee">₱0</span></div>
                 <div class="sum-line total"><span>Total</span><span id="sumTotal">₱0</span></div>
 
                 <form id="checkoutForm" method="POST" action="{{ route('cart.checkout') }}" style="margin-top:18px">
